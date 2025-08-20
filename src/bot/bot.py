@@ -1,11 +1,13 @@
 import logging
 import os
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
 from dotenv import load_dotenv
 from src.database import Database
 from src.models import User, UserRole
 from src.services.user_service import UserService
+from src.services.test_creation_service import TestCreationService
+from src.services.test_taking_service import TestTakingService
 from src.services.test_service import TestService
 
 load_dotenv()
@@ -19,6 +21,8 @@ class TestBot:
         self.db = Database()
         self.user_service = UserService(self.db)
         self.test_service = TestService(self.db)
+        self.test_creation_service = TestCreationService(self.db)
+        self.test_taking_service = TestTakingService(self.db)
         
         # Bot yaratish
         self.application = Application.builder().token(self.token).build()
@@ -30,6 +34,7 @@ class TestBot:
         self.application.add_handler(CommandHandler("start", self.start_command))
         self.application.add_handler(CommandHandler("help", self.help_command))
         self.application.add_handler(CommandHandler("register", self.register_command))
+        self.application.add_handler(CommandHandler("menu", self.menu_command))
         
         # O'qituvchi komandalari
         self.application.add_handler(CommandHandler("create_test", self.create_test_command))
@@ -46,26 +51,76 @@ class TestBot:
         # Xabar handerlari
         self.application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_message))
     
+    def _get_main_keyboard(self, user_role: UserRole):
+        """Asosiy reply keyboard"""
+        if user_role == UserRole.TEACHER:
+            keyboard = [
+                [KeyboardButton("📝 Test yaratish"), KeyboardButton("📋 Mening testlarim")],
+                [KeyboardButton("📊 Natijalar"), KeyboardButton("👥 O'quvchilar")],
+                [KeyboardButton("❓ Yordam"), KeyboardButton("⚙️ Sozlamalar")]
+            ]
+        else:  # STUDENT
+            keyboard = [
+                [KeyboardButton("📝 Mavjud testlar"), KeyboardButton("�� Mening natijalarim")],
+                [KeyboardButton("🏆 Reyting"), KeyboardButton("📚 O'quv materiallari")],
+                [KeyboardButton("❓ Yordam"), KeyboardButton("⚙️ Sozlamalar")]
+            ]
+        
+        return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=False)
+    
+    def _get_test_keyboard(self, tests):
+        """Testlar uchun inline keyboard"""
+        keyboard = []
+        for test in tests:
+            keyboard.append([InlineKeyboardButton(
+                f"📝 {test.title}", 
+                callback_data=f"take_test_{test.id}"
+            )])
+        
+        keyboard.append([InlineKeyboardButton("🔙 Orqaga", callback_data="back_to_menu")])
+        return InlineKeyboardMarkup(keyboard)
+    
+    def _get_results_keyboard(self, results):
+        """Natijalar uchun inline keyboard"""
+        keyboard = []
+        for result in results:
+            keyboard.append([InlineKeyboardButton(
+                f"📊 {result.test.title} - {result.percentage:.1f}%", 
+                callback_data=f"view_result_{result.id}"
+            )])
+        
+        keyboard.append([InlineKeyboardButton("🔙 Orqaga", callback_data="back_to_menu")])
+        return InlineKeyboardMarkup(keyboard)
+    
     async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Start komandasi"""
         user = update.effective_user
-        welcome_text = f"""
+        
+        # Foydalanuvchini tekshirish
+        db_user = await self.user_service.get_user_by_telegram_id(user.id)
+        
+        if not db_user:
+            # Ro'yxatdan o'tmagan foydalanuvchi
+            welcome_text = f"""
 🎓 Test Bot ga xush kelibsiz, {user.first_name}!
 
 Bu bot orqali:
 📝 O'qituvchilar testlar tuzishi
 📊 O'quvchilar testlarni ishlashi
-�� Natijalarni ko'rish mumkin
+📈 Natijalarni ko'rish mumkin
 
-Boshlash uchun /register komandasini yuboring.
-        """
-        
-        keyboard = [
-            [InlineKeyboardButton("📝 Ro'yxatdan o'tish", callback_data="register")]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        
-        await update.message.reply_text(welcome_text, reply_markup=reply_markup)
+Boshlash uchun ro'yxatdan o'ting.
+            """
+            
+            keyboard = [
+                [InlineKeyboardButton("📝 Ro'yxatdan o'tish", callback_data="register")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            await update.message.reply_text(welcome_text, reply_markup=reply_markup)
+        else:
+            # Ro'yxatdan o'tgan foydalanuvchi
+            await self.menu_command(update, context)
     
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Yordam komandasi"""
@@ -74,19 +129,22 @@ Boshlash uchun /register komandasini yuboring.
 
 📋 Mavjud komandalar:
 
-�� Umumiy:
+👤 Umumiy:
 /start - Botni ishga tushirish
 /help - Yordam
 /register - Ro'yxatdan o'tish
+/menu - Asosiy menyu
 
 👨‍🏫 O'qituvchilar uchun:
-/create_test - Yangi test yaratish
-/my_tests - Mening testlarim
-/results - Test natijalari
+📝 Test yaratish - Yangi test yaratish
+📋 Mening testlarim - Mening testlarim
+📊 Natijalar - Test natijalari
+👥 O'quvchilar - O'quvchilar ro'yxati
 
 👨‍🎓 O'quvchilar uchun:
-/available_tests - Mavjud testlar
-/my_results - Mening natijalarim
+📝 Mavjud testlar - Mavjud testlar
+📊 Mening natijalarim - Mening natijalarim
+🏆 Reyting - O'quvchilar reytingi
         """
         await update.message.reply_text(help_text)
     
@@ -105,7 +163,7 @@ Boshlash uchun /register komandasini yuboring.
         if db_user:
             keyboard = [
                 [InlineKeyboardButton("👨‍🏫 O'qituvchi", callback_data="role_teacher")],
-                [InlineKeyboardButton("👨‍🎓 O'quvchi", callback_data="role_student")]
+                [InlineKeyboardButton("👨‍�� O'quvchi", callback_data="role_student")]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
             
@@ -116,13 +174,36 @@ Boshlash uchun /register komandasini yuboring.
         else:
             await update.message.reply_text("❌ Ro'yxatdan o'tishda xatolik yuz berdi!")
     
+    async def menu_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Asosiy menyu"""
+        user = update.effective_user
+        db_user = await self.user_service.get_user_by_telegram_id(user.id)
+        
+        if not db_user:
+            await update.message.reply_text("❌ Avval ro'yxatdan o'ting! /register")
+            return
+        
+        role_text = "👨‍🏫 O'qituvchi" if db_user.role == UserRole.TEACHER else "👨‍🎓 O'quvchi"
+        
+        menu_text = f"""
+🏠 Asosiy menyu
+
+👤 Foydalanuvchi: {user.first_name}
+🎭 Rol: {role_text}
+
+Quyidagi tugmalardan birini tanlang:
+        """
+        
+        reply_markup = self._get_main_keyboard(db_user.role)
+        await update.message.reply_text(menu_text, reply_markup=reply_markup)
+    
     async def create_test_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Test yaratish komandasi"""
         user = update.effective_user
         db_user = await self.user_service.get_user_by_telegram_id(user.id)
         
         if not db_user or db_user.role != UserRole.TEACHER:
-            await update.message.reply_text("❌ Bu komanda faqat o'qituvchilar uchun!")
+            await update.message.reply_text("❌ Bu funksiya faqat o'qituvchilar uchun!")
             return
         
         await update.message.reply_text(
@@ -130,7 +211,12 @@ Boshlash uchun /register komandasini yuboring.
             "Test nomi: [Test nomi]\n"
             "Tavsif: [Test tavsifi]\n"
             "Vaqt chegarasi: [daqiqalarda]\n"
-            "O'tish balli: [foizda]"
+            "O'tish balli: [foizda]\n\n"
+            "Misol:\n"
+            "Test nomi: Matematika testi\n"
+            "Tavsif: Algebra va geometriya\n"
+            "Vaqt chegarasi: 30\n"
+            "O'tish balli: 70"
         )
         context.user_data['creating_test'] = True
     
@@ -149,9 +235,66 @@ Boshlash uchun /register komandasini yuboring.
             text += f"⏱️ {test.time_limit} daqiqa\n"
             text += f"📊 {test.passing_score}% o'tish balli\n\n"
         
-        keyboard = [[InlineKeyboardButton(f"📝 {test.title}", callback_data=f"take_test_{test.id}")] for test in tests]
-        reply_markup = InlineKeyboardMarkup(keyboard)
+        reply_markup = self._get_test_keyboard(tests)
+        await update.message.reply_text(text, reply_markup=reply_markup)
+    
+    async def my_tests_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Mening testlarim"""
+        user = update.effective_user
+        db_user = await self.user_service.get_user_by_telegram_id(user.id)
         
+        if not db_user or db_user.role != UserRole.TEACHER:
+            await update.message.reply_text("❌ Bu funksiya faqat o'qituvchilar uchun!")
+            return
+        
+        tests = await self.test_service.get_teacher_tests(db_user.id)
+        
+        if not tests:
+            await update.message.reply_text("📝 Sizda hali testlar yo'q. Yangi test yarating!")
+            return
+        
+        text = "📋 Mening testlarim:\n\n"
+        for test in tests:
+            text += f"📝 {test.title}\n"
+            text += f"📊 Holat: {test.status.value}\n"
+            text += f"⏱️ {test.time_limit} daqiqa\n\n"
+        
+        reply_markup = self._get_test_keyboard(tests)
+        await update.message.reply_text(text, reply_markup=reply_markup)
+    
+    async def results_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Test natijalari"""
+        user = update.effective_user
+        db_user = await self.user_service.get_user_by_telegram_id(user.id)
+        
+        if not db_user or db_user.role != UserRole.TEACHER:
+            await update.message.reply_text("❌ Bu funksiya faqat o'qituvchilar uchun!")
+            return
+        
+        await update.message.reply_text("📊 Test natijalari funksiyasi ishlab chiqilmoqda...")
+    
+    async def my_results_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Mening natijalarim"""
+        user = update.effective_user
+        db_user = await self.user_service.get_user_by_telegram_id(user.id)
+        
+        if not db_user or db_user.role != UserRole.STUDENT:
+            await update.message.reply_text("❌ Bu funksiya faqat o'quvchilar uchun!")
+            return
+        
+        results = await self.test_service.get_student_results(db_user.id)
+        
+        if not results:
+            await update.message.reply_text("📊 Sizda hali test natijalari yo'q.")
+            return
+        
+        text = "📊 Mening natijalarim:\n\n"
+        for result in results:
+            text += f"📝 {result.test.title}\n"
+            text += f"📊 Ball: {result.score}/{result.max_score}\n"
+            text += f"📈 Foiz: {result.percentage:.1f}%\n\n"
+        
+        reply_markup = self._get_results_keyboard(results)
         await update.message.reply_text(text, reply_markup=reply_markup)
     
     async def button_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -167,6 +310,11 @@ Boshlash uchun /register komandasini yuboring.
         elif query.data.startswith("take_test_"):
             test_id = int(query.data.split("_")[2])
             await self._start_test(query, test_id)
+        elif query.data == "back_to_menu":
+            await self._back_to_menu(query, context)
+        elif query.data.startswith("view_result_"):
+            result_id = int(query.data.split("_")[2])
+            await self._view_result(query, result_id)
     
     async def _set_user_role(self, query, role):
         """Foydalanuvchi roli o'rnatish"""
@@ -179,6 +327,10 @@ Boshlash uchun /register komandasini yuboring.
             
             role_text = "👨‍🏫 O'qituvchi" if role == "teacher" else "👨‍🎓 O'quvchi"
             await query.edit_message_text(f"✅ Rolingiz o'rnatildi: {role_text}")
+            
+            # Asosiy menyuni ko'rsatish
+            keyboard = self._get_main_keyboard(user_role)
+            await query.message.reply_text("🏠 Asosiy menyu:", reply_markup=keyboard)
     
     async def _start_test(self, query, test_id):
         """Testni boshlash"""
@@ -192,29 +344,71 @@ Boshlash uchun /register komandasini yuboring.
         # Testni boshlash logikasi
         await query.edit_message_text(f"📝 Test boshlanmoqda... Test ID: {test_id}")
     
+    async def _back_to_menu(self, query, context):
+        """Menyuga qaytish"""
+        await self.menu_command(context, context)
+    
+    async def _view_result(self, query, result_id):
+        """Natijani ko'rish"""
+        await query.edit_message_text(f"📊 Natija ko'rish... Result ID: {result_id}")
+    
     async def handle_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Xabar handerlari"""
         user = update.effective_user
         text = update.message.text
         
-        if context.user_data.get('creating_test'):
+        # Reply keyboard tugmalarini tekshirish
+        if text == "📝 Test yaratish":
+            await self.create_test_command(update, context)
+        elif text == "📋 Mening testlarim":
+            await self.my_tests_command(update, context)
+        elif text == "📊 Natijalar":
+            await self.results_command(update, context)
+        elif text == "👥 O'quvchilar":
+            await update.message.reply_text("👥 O'quvchilar ro'yxati funksiyasi ishlab chiqilmoqda...")
+        elif text == "📝 Mavjud testlar":
+            await self.available_tests_command(update, context)
+        elif text == "📊 Mening natijalarim":
+            await self.my_results_command(update, context)
+        elif text == "🏆 Reyting":
+            await update.message.reply_text("🏆 O'quvchilar reytingi funksiyasi ishlab chiqilmoqda...")
+        elif text == "📚 O'quv materiallari":
+            await update.message.reply_text("📚 O'quv materiallari funksiyasi ishlab chiqilmoqda...")
+        elif text == "❓ Yordam":
+            await self.help_command(update, context)
+        elif text == "⚙️ Sozlamalar":
+            await update.message.reply_text("⚙️ Sozlamalar funksiyasi ishlab chiqilmoqda...")
+        elif context.user_data.get('creating_test'):
             # Test yaratish logikasi
-            await update.message.reply_text("📝 Test yaratish logikasi ishlab chiqilmoqda...")
-            context.user_data['creating_test'] = False
+            try:
+                user = update.effective_user
+                db_user = await self.user_service.get_user_by_telegram_id(user.id)
+                
+                if not db_user or db_user.role != UserRole.TEACHER:
+                    await update.message.reply_text("❌ Bu funksiya faqat o'qituvchilar uchun!")
+                    context.user_data['creating_test'] = False
+                    return
+                
+                # Test yaratish
+                test = await self.test_creation_service.create_test_from_text(text, db_user.id)
+                
+                await update.message.reply_text(
+                    f"✅ Test muvaffaqiyatli yaratildi!\n\n"
+                    f"📝 Nomi: {test.title}\n"
+                    f"📊 Holat: {test.status.value}\n"
+                    f"⏱️ Vaqt: {test.time_limit} daqiqa\n"
+                    f"📈 O'tish balli: {test.passing_score}%\n\n"
+                    f"Test ID: {test.id}"
+                )
+                
+                context.user_data['creating_test'] = False
+                context.user_data['current_test_id'] = test.id
+                
+            except Exception as e:
+                await update.message.reply_text(f"❌ Xatolik: {str(e)}")
+                context.user_data['creating_test'] = False
         else:
             await update.message.reply_text("❓ Tushunarsiz xabar. /help komandasi bilan yordam oling.")
-    
-    async def my_tests_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Mening testlarim"""
-        await update.message.reply_text("📝 Mening testlarim funksiyasi ishlab chiqilmoqda...")
-    
-    async def results_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Test natijalari"""
-        await update.message.reply_text("📊 Test natijalari funksiyasi ishlab chiqilmoqda...")
-    
-    async def my_results_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Mening natijalarim"""
-        await update.message.reply_text("📈 Mening natijalarim funksiyasi ishlab chiqilmoqda...")
     
     def run(self):
         """Botni ishga tushirish"""
