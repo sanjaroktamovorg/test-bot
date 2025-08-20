@@ -7,9 +7,9 @@ from src.database import Database
 from src.models import User, UserRole
 from src.models.test_types import TestType, TestCategory
 from src.services.user_service import UserService
-from src.services.test_service import TestService
 from src.services.test_creation_service import TestCreationService
 from src.services.test_taking_service import TestTakingService
+from src.services.test_service import TestService
 
 load_dotenv()
 
@@ -85,7 +85,7 @@ class TestBot:
         keyboard = [
             [KeyboardButton("📐 Matematika"), KeyboardButton("⚡ Fizika")],
             [KeyboardButton("🧪 Kimyo"), KeyboardButton("🌿 Biologiya")],
-            [KeyboardButton("�� Tarix"), KeyboardButton("🌍 Geografiya")],
+            [KeyboardButton("📚 Tarix"), KeyboardButton("🌍 Geografiya")],
             [KeyboardButton("📖 Adabiyot"), KeyboardButton("🗣️ Til")],
             [KeyboardButton("💻 Informatika"), KeyboardButton("📋 Boshqa")],
             [KeyboardButton("🔙 Orqaga")]
@@ -109,7 +109,7 @@ class TestBot:
         keyboard = []
         for result in results:
             keyboard.append([InlineKeyboardButton(
-                f"�� {result.test.title} - {result.percentage:.1f}%", 
+                f"📊 {result.test.title} - {result.percentage:.1f}%", 
                 callback_data=f"view_result_{result.id}"
             )])
         
@@ -187,7 +187,7 @@ Boshlash uchun ro'yxatdan o'ting.
         if db_user:
             keyboard = [
                 [InlineKeyboardButton("👨‍🏫 O'qituvchi", callback_data="role_teacher")],
-                [InlineKeyboardButton("👨‍🎓 O'quvchi", callback_data="role_student")]
+                [InlineKeyboardButton("👨‍�� O'quvchi", callback_data="role_student")]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
             
@@ -231,7 +231,7 @@ Quyidagi tugmalardan birini tanlang:
             return
         
         await update.message.reply_text(
-            "�� Test yaratish uchun avval test turini tanlang:",
+            "📝 Test yaratish uchun avval test turini tanlang:",
             reply_markup=self._get_test_type_keyboard()
         )
         context.user_data['creating_test'] = True
@@ -367,8 +367,6 @@ Quyidagi tugmalardan birini tanlang:
         await self.menu_command(context, context)
     
     async def _view_result(self, query, result_id):
-        """Natijani ko'rish"""
-        await query.edit_message_text(f"📊 Natija ko'rish... Result ID: {result_id}")
     
     async def _handle_test_creation(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
         """Test yaratish jarayonini boshqarish"""
@@ -382,7 +380,7 @@ Quyidagi tugmalardan birini tanlang:
             await self._handle_test_category_selection(update, context, text)
         elif step == 'enter_details':
             await self._handle_test_details_entry(update, context, text, db_user)
-    
+        
     async def _handle_test_type_selection(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
         """Test turi tanlash"""
         test_type_map = {
@@ -494,7 +492,287 @@ Quyidagi tugmalardan birini tanlang:
                 f"✅ Test muvaffaqiyatli yaratildi!\n\n"
                 f"📝 Nomi: {test.title}\n"
                 f"📊 Turi: {test.test_type}\n"
-                f"�� Toifasi: {test.category}\n"
+                f"📂 Toifasi: {test.category}\n"
+                f"⏱️ Vaqt: {test.time_limit} daqiqa\n"
+                f"📈 O'tish balli: {test.passing_score}%\n\n"
+                f"Test ID: {test.id}",
+                reply_markup=self._get_main_keyboard(db_user.role)
+            )
+            
+            context.user_data['creating_test'] = False
+            context.user_data['test_creation_step'] = None
+            context.user_data['test_data'] = {}
+            
+        except Exception as e:
+            await update.message.reply_text(f"❌ Xatolik: {str(e)}")
+            context.user_data['creating_test'] = False
+        """Natijani ko'rish"""
+    
+    async def _handle_test_creation(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
+        """Test yaratish jarayonini boshqarish"""
+        step = context.user_data.get('test_creation_step', 'select_type')
+        user = update.effective_user
+        db_user = await self.user_service.get_user_by_telegram_id(user.id)
+        
+        if step == 'select_type':
+            await self._handle_test_type_selection(update, context, text)
+        elif step == 'select_category':
+            await self._handle_test_category_selection(update, context, text)
+        elif step == 'enter_details':
+            await self._handle_test_details_entry(update, context, text, db_user)
+        
+    async def _handle_test_type_selection(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
+        """Test turi tanlash"""
+        test_type_map = {
+            '📝 Oddiy test': TestType.SIMPLE,
+            '🏛️ DTM test': TestType.DTM,
+            '🏆 Milliy sertifikat test': TestType.NATIONAL_CERT,
+            '📖 Ochiq (variantsiz) test': TestType.OPEN
+        }
+        
+        if text == '🔙 Orqaga':
+            await self.menu_command(update, context)
+            context.user_data['creating_test'] = False
+            return
+        
+        if text in test_type_map:
+            test_type = test_type_map[text]
+            context.user_data['test_data']['test_type'] = test_type.value
+            
+            if test_type == TestType.SIMPLE:
+                # Oddiy test uchun toifa tanlash
+                await update.message.reply_text(
+                    "📝 Oddiy test yaratish uchun toifani tanlang:",
+                    reply_markup=self._get_test_category_keyboard()
+                )
+                context.user_data['test_creation_step'] = 'select_category'
+            else:
+                # Boshqa test turlari uchun xabar
+                await update.message.reply_text(
+                    f"🚧 {text} yaratish funksiyasi ishlab chiqilmoqda!\n\n"
+                    f"Iltimos, oddiy test yaratishni sinab ko'ring yoki keyinroq qaytib keling.",
+                    reply_markup=self._get_test_type_keyboard()
+                )
+        else:
+            await update.message.reply_text(
+                "❌ Iltimos, quyidagi tugmalardan birini tanlang:",
+                reply_markup=self._get_test_type_keyboard()
+            )
+    
+    async def _handle_test_category_selection(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
+        """Test toifasi tanlash"""
+        category_map = {
+            '📐 Matematika': TestCategory.MATHEMATICS,
+            '⚡ Fizika': TestCategory.PHYSICS,
+            '🧪 Kimyo': TestCategory.CHEMISTRY,
+            '🌿 Biologiya': TestCategory.BIOLOGY,
+            '📚 Tarix': TestCategory.HISTORY,
+            '🌍 Geografiya': TestCategory.GEOGRAPHY,
+            '📖 Adabiyot': TestCategory.LITERATURE,
+            '🗣️ Til': TestCategory.LANGUAGE,
+            '💻 Informatika': TestCategory.COMPUTER_SCIENCE,
+            '📋 Boshqa': TestCategory.OTHER
+        }
+        
+        if text == '🔙 Orqaga':
+            await update.message.reply_text(
+                "📝 Test yaratish uchun avval test turini tanlang:",
+                reply_markup=self._get_test_type_keyboard()
+            )
+            context.user_data['test_creation_step'] = 'select_type'
+            return
+        
+        if text in category_map:
+            category = category_map[text]
+            context.user_data['test_data']['category'] = category.value
+            
+            await update.message.reply_text(
+                "📝 Endi test ma'lumotlarini kiriting:\n\n"
+                "Quyidagi formatda yuboring:\n\n"
+                "Test nomi: [Test nomi]\n"
+                "Tavsif: [Test tavsifi]\n"
+                "Vaqt chegarasi: [daqiqalarda]\n"
+                "O'tish balli: [foizda]\n\n"
+                "Misol:\n"
+                "Test nomi: Algebra testi\n"
+                "Tavsif: Kvadrat tenglamalar\n"
+                "Vaqt chegarasi: 30\n"
+                "O'tish balli: 70",
+                reply_markup=ReplyKeyboardMarkup([[KeyboardButton("🔙 Orqaga")]], resize_keyboard=True)
+            )
+            context.user_data['test_creation_step'] = 'enter_details'
+        else:
+            await update.message.reply_text(
+                "❌ Iltimos, quyidagi tugmalardan birini tanlang:",
+                reply_markup=self._get_test_category_keyboard()
+            )
+    
+    async def _handle_test_details_entry(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str, db_user):
+        """Test ma'lumotlarini kiritish"""
+        if text == '🔙 Orqaga':
+            await update.message.reply_text(
+                "📝 Oddiy test yaratish uchun toifani tanlang:",
+                reply_markup=self._get_test_category_keyboard()
+            )
+            context.user_data['test_creation_step'] = 'select_category'
+            return
+        
+        try:
+            # Test ma'lumotlarini parse qilish
+            test_data = context.user_data['test_data']
+            parsed_data = await self.test_creation_service.parse_test_data(text)
+            
+            # Barcha ma'lumotlarni birlashtirish
+            final_data = {**test_data, **parsed_data}
+            
+            # Test yaratish
+            test = await self.test_creation_service.create_test_from_data(final_data, db_user.id)
+            
+            await update.message.reply_text(
+                f"✅ Test muvaffaqiyatli yaratildi!\n\n"
+                f"📝 Nomi: {test.title}\n"
+                f"📊 Turi: {test.test_type}\n"
+                f"📂 Toifasi: {test.category}\n"
+                f"⏱️ Vaqt: {test.time_limit} daqiqa\n"
+                f"📈 O'tish balli: {test.passing_score}%\n\n"
+                f"Test ID: {test.id}",
+                reply_markup=self._get_main_keyboard(db_user.role)
+            )
+            
+            context.user_data['creating_test'] = False
+            context.user_data['test_creation_step'] = None
+            context.user_data['test_data'] = {}
+            
+        except Exception as e:
+            await update.message.reply_text(f"❌ Xatolik: {str(e)}")
+            context.user_data['creating_test'] = False
+        await query.edit_message_text(f"📊 Natija ko'rish... Result ID: {result_id}")
+    
+    async def _handle_test_creation(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
+        """Test yaratish jarayonini boshqarish"""
+        step = context.user_data.get('test_creation_step', 'select_type')
+        user = update.effective_user
+        db_user = await self.user_service.get_user_by_telegram_id(user.id)
+        
+        if step == 'select_type':
+            await self._handle_test_type_selection(update, context, text)
+        elif step == 'select_category':
+            await self._handle_test_category_selection(update, context, text)
+        elif step == 'enter_details':
+            await self._handle_test_details_entry(update, context, text, db_user)
+        
+    async def _handle_test_type_selection(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
+        """Test turi tanlash"""
+        test_type_map = {
+            '📝 Oddiy test': TestType.SIMPLE,
+            '🏛️ DTM test': TestType.DTM,
+            '🏆 Milliy sertifikat test': TestType.NATIONAL_CERT,
+            '📖 Ochiq (variantsiz) test': TestType.OPEN
+        }
+        
+        if text == '🔙 Orqaga':
+            await self.menu_command(update, context)
+            context.user_data['creating_test'] = False
+            return
+        
+        if text in test_type_map:
+            test_type = test_type_map[text]
+            context.user_data['test_data']['test_type'] = test_type.value
+            
+            if test_type == TestType.SIMPLE:
+                # Oddiy test uchun toifa tanlash
+                await update.message.reply_text(
+                    "📝 Oddiy test yaratish uchun toifani tanlang:",
+                    reply_markup=self._get_test_category_keyboard()
+                )
+                context.user_data['test_creation_step'] = 'select_category'
+            else:
+                # Boshqa test turlari uchun xabar
+                await update.message.reply_text(
+                    f"🚧 {text} yaratish funksiyasi ishlab chiqilmoqda!\n\n"
+                    f"Iltimos, oddiy test yaratishni sinab ko'ring yoki keyinroq qaytib keling.",
+                    reply_markup=self._get_test_type_keyboard()
+                )
+        else:
+            await update.message.reply_text(
+                "❌ Iltimos, quyidagi tugmalardan birini tanlang:",
+                reply_markup=self._get_test_type_keyboard()
+            )
+    
+    async def _handle_test_category_selection(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
+        """Test toifasi tanlash"""
+        category_map = {
+            '📐 Matematika': TestCategory.MATHEMATICS,
+            '⚡ Fizika': TestCategory.PHYSICS,
+            '🧪 Kimyo': TestCategory.CHEMISTRY,
+            '🌿 Biologiya': TestCategory.BIOLOGY,
+            '📚 Tarix': TestCategory.HISTORY,
+            '🌍 Geografiya': TestCategory.GEOGRAPHY,
+            '📖 Adabiyot': TestCategory.LITERATURE,
+            '🗣️ Til': TestCategory.LANGUAGE,
+            '💻 Informatika': TestCategory.COMPUTER_SCIENCE,
+            '📋 Boshqa': TestCategory.OTHER
+        }
+        
+        if text == '🔙 Orqaga':
+            await update.message.reply_text(
+                "📝 Test yaratish uchun avval test turini tanlang:",
+                reply_markup=self._get_test_type_keyboard()
+            )
+            context.user_data['test_creation_step'] = 'select_type'
+            return
+        
+        if text in category_map:
+            category = category_map[text]
+            context.user_data['test_data']['category'] = category.value
+            
+            await update.message.reply_text(
+                "📝 Endi test ma'lumotlarini kiriting:\n\n"
+                "Quyidagi formatda yuboring:\n\n"
+                "Test nomi: [Test nomi]\n"
+                "Tavsif: [Test tavsifi]\n"
+                "Vaqt chegarasi: [daqiqalarda]\n"
+                "O'tish balli: [foizda]\n\n"
+                "Misol:\n"
+                "Test nomi: Algebra testi\n"
+                "Tavsif: Kvadrat tenglamalar\n"
+                "Vaqt chegarasi: 30\n"
+                "O'tish balli: 70",
+                reply_markup=ReplyKeyboardMarkup([[KeyboardButton("🔙 Orqaga")]], resize_keyboard=True)
+            )
+            context.user_data['test_creation_step'] = 'enter_details'
+        else:
+            await update.message.reply_text(
+                "❌ Iltimos, quyidagi tugmalardan birini tanlang:",
+                reply_markup=self._get_test_category_keyboard()
+            )
+    
+    async def _handle_test_details_entry(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str, db_user):
+        """Test ma'lumotlarini kiritish"""
+        if text == '🔙 Orqaga':
+            await update.message.reply_text(
+                "📝 Oddiy test yaratish uchun toifani tanlang:",
+                reply_markup=self._get_test_category_keyboard()
+            )
+            context.user_data['test_creation_step'] = 'select_category'
+            return
+        
+        try:
+            # Test ma'lumotlarini parse qilish
+            test_data = context.user_data['test_data']
+            parsed_data = await self.test_creation_service.parse_test_data(text)
+            
+            # Barcha ma'lumotlarni birlashtirish
+            final_data = {**test_data, **parsed_data}
+            
+            # Test yaratish
+            test = await self.test_creation_service.create_test_from_data(final_data, db_user.id)
+            
+            await update.message.reply_text(
+                f"✅ Test muvaffaqiyatli yaratildi!\n\n"
+                f"📝 Nomi: {test.title}\n"
+                f"📊 Turi: {test.test_type}\n"
+                f"📂 Toifasi: {test.category}\n"
                 f"⏱️ Vaqt: {test.time_limit} daqiqa\n"
                 f"📈 O'tish balli: {test.passing_score}%\n\n"
                 f"Test ID: {test.id}",
@@ -536,8 +814,27 @@ Quyidagi tugmalardan birini tanlang:
         elif text == "⚙️ Sozlamalar":
             await update.message.reply_text("⚙️ Sozlamalar funksiyasi ishlab chiqilmoqda...")
         elif context.user_data.get('creating_test'):
-            # Test yaratish logikasi
             await self._handle_test_creation(update, context, text)
+                    return
+                
+                # Test yaratish
+                test = await self.test_creation_service.create_test_from_text(text, db_user.id)
+                
+                await update.message.reply_text(
+                    f"✅ Test muvaffaqiyatli yaratildi!\n\n"
+                    f"📝 Nomi: {test.title}\n"
+                    f"📊 Holat: {test.status.value}\n"
+                    f"⏱️ Vaqt: {test.time_limit} daqiqa\n"
+                    f"📈 O'tish balli: {test.passing_score}%\n\n"
+                    f"Test ID: {test.id}"
+                )
+                
+                context.user_data['creating_test'] = False
+                context.user_data['current_test_id'] = test.id
+                
+            except Exception as e:
+                await update.message.reply_text(f"❌ Xatolik: {str(e)}")
+                context.user_data['creating_test'] = False
         else:
             await update.message.reply_text("❓ Tushunarsiz xabar. /help komandasi bilan yordam oling.")
     
