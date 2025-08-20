@@ -34,6 +34,11 @@ class TestCreationService:
         return data
     
     async def create_test_from_text(self, text: str, teacher_id: int) -> Test:
+        """Matndan test yaratish (eski usul)"""
+        data = await self.parse_test_data(text)
+        return await self.create_test_from_data(data, teacher_id)
+    
+    async def create_test_from_data(self, data: dict, teacher_id: int) -> Test:
         """Matndan test yaratish"""
         data = await self.parse_test_data(text)
         
@@ -41,6 +46,28 @@ class TestCreationService:
             raise ValueError("Test nomi kiritilmagan!")
         
         session = self.db.get_session()
+        try:
+            new_test = Test(
+                title=data.get('title', 'Test'),
+                description=data.get('description', ''),
+                teacher_id=teacher_id,
+                time_limit=data.get('time_limit', 30),
+                passing_score=data.get('passing_score', 60.0),
+                test_type=data.get('test_type', 'simple'),
+                category=data.get('category', None),
+                status=TestStatus.DRAFT
+            )
+            
+            session.add(new_test)
+            session.commit()
+            session.refresh(new_test)
+            return new_test
+            
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            self.db.close_session(session)
         try:
             new_test = Test(
                 title=data['title'],
@@ -66,6 +93,28 @@ class TestCreationService:
                                   answers: list, correct_answer: int) -> Question:
         """Testga savol qo'shish"""
         session = self.db.get_session()
+        try:
+            new_test = Test(
+                title=data.get('title', 'Test'),
+                description=data.get('description', ''),
+                teacher_id=teacher_id,
+                time_limit=data.get('time_limit', 30),
+                passing_score=data.get('passing_score', 60.0),
+                test_type=data.get('test_type', 'simple'),
+                category=data.get('category', None),
+                status=TestStatus.DRAFT
+            )
+            
+            session.add(new_test)
+            session.commit()
+            session.refresh(new_test)
+            return new_test
+            
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            self.db.close_session(session)
         try:
             # Savol yaratish
             question = Question(
@@ -102,6 +151,28 @@ class TestCreationService:
     async def activate_test(self, test_id: int) -> bool:
         """Testni faollashtirish"""
         session = self.db.get_session()
+        try:
+            new_test = Test(
+                title=data.get('title', 'Test'),
+                description=data.get('description', ''),
+                teacher_id=teacher_id,
+                time_limit=data.get('time_limit', 30),
+                passing_score=data.get('passing_score', 60.0),
+                test_type=data.get('test_type', 'simple'),
+                category=data.get('category', None),
+                status=TestStatus.DRAFT
+            )
+            
+            session.add(new_test)
+            session.commit()
+            session.refresh(new_test)
+            return new_test
+            
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            self.db.close_session(session)
         try:
             test = session.query(Test).filter(Test.id == test_id).first()
             if test:

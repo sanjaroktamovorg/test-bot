@@ -1,4 +1,5 @@
 from sqlalchemy import Enum
+from src.models.test_types import TestType, TestCategory
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, Float
 from src.database.database import Base
 from sqlalchemy.orm import relationship
@@ -13,6 +14,9 @@ class TestStatus(enum.Enum):
     INACTIVE = "inactive"
 
 class Test(Base):
+
+    test_type = Column(String(50), default=TestType.SIMPLE.value)
+    category = Column(String(50), nullable=True)
     __tablename__ = "tests"
     
     id = Column(Integer, primary_key=True, index=True)
