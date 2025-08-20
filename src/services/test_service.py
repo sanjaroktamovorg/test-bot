@@ -33,10 +33,26 @@ class TestService:
             self.db.close_session(session)
     
     async def get_available_tests(self) -> list[Test]:
-        """Mavjud testlarni olish"""
+        """Mavjud testlarni olish (faqat ommaviy testlar)"""
         session = self.db.get_session()
         try:
-            return session.query(Test).filter(Test.status == TestStatus.ACTIVE).all()
+            return session.query(Test).filter(
+                Test.status == TestStatus.ACTIVE,
+                Test.category == TestCategory.PUBLIC.value
+            ).all()
+        finally:
+            self.db.close_session(session)
+    
+    async def get_test_by_code(self, test_code: str) -> Test:
+        """Maxsus kod bo'yicha testni olish"""
+        session = self.db.get_session()
+        try:
+            return session.query(Test).filter(
+                Test.test_code == test_code,
+                Test.status == TestStatus.ACTIVE
+            ).first()
+        finally:
+            self.db.close_session(session)
         finally:
             self.db.close_session(session)
     

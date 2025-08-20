@@ -48,6 +48,8 @@ class TestCreationService:
         session = self.db.get_session()
         try:
             new_test = Test(
+
+            # Shaxsiy test uchun maxsus kod yaratish\n            if final_data.get('category') == TestCategory.PRIVATE.value:\n                new_test.test_code = generate_test_code()\n            \n            session.add(new_test)\n            session.commit()\n            session.refresh(new_test)\n            return new_test\n            \n        except Exception as e:\n            session.rollback()\n            raise e\n        finally:\n            self.db.close_session(session)
                 title=data.get('title', 'Test'),
                 description=data.get('description', ''),
                 teacher_id=teacher_id,
@@ -70,6 +72,8 @@ class TestCreationService:
             self.db.close_session(session)
         try:
             new_test = Test(
+
+            # Shaxsiy test uchun maxsus kod yaratish\n            if final_data.get('category') == TestCategory.PRIVATE.value:\n                new_test.test_code = generate_test_code()\n            \n            session.add(new_test)\n            session.commit()\n            session.refresh(new_test)\n            return new_test\n            \n        except Exception as e:\n            session.rollback()\n            raise e\n        finally:\n            self.db.close_session(session)
                 title=data['title'],
                 description=data.get('description', ''),
                 teacher_id=teacher_id,
@@ -95,6 +99,8 @@ class TestCreationService:
         session = self.db.get_session()
         try:
             new_test = Test(
+
+            # Shaxsiy test uchun maxsus kod yaratish\n            if final_data.get('category') == TestCategory.PRIVATE.value:\n                new_test.test_code = generate_test_code()\n            \n            session.add(new_test)\n            session.commit()\n            session.refresh(new_test)\n            return new_test\n            \n        except Exception as e:\n            session.rollback()\n            raise e\n        finally:\n            self.db.close_session(session)
                 title=data.get('title', 'Test'),
                 description=data.get('description', ''),
                 teacher_id=teacher_id,
@@ -153,6 +159,8 @@ class TestCreationService:
         session = self.db.get_session()
         try:
             new_test = Test(
+
+            # Shaxsiy test uchun maxsus kod yaratish\n            if final_data.get('category') == TestCategory.PRIVATE.value:\n                new_test.test_code = generate_test_code()\n            \n            session.add(new_test)\n            session.commit()\n            session.refresh(new_test)\n            return new_test\n            \n        except Exception as e:\n            session.rollback()\n            raise e\n        finally:\n            self.db.close_session(session)
                 title=data.get('title', 'Test'),
                 description=data.get('description', ''),
                 teacher_id=teacher_id,

@@ -5,7 +5,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQu
 from dotenv import load_dotenv
 from src.database import Database
 from src.models import User, UserRole
-from src.models.test_types import TestType, TestCategory
+from src.models.test_types import TestType, TestCategory, TestSubject
 from src.services.user_service import UserService
 from src.services.test_service import TestService
 from src.services.test_creation_service import TestCreationService
@@ -83,9 +83,18 @@ class TestBot:
     def _get_test_category_keyboard(self):
         """Test toifasi tanlash uchun reply keyboard"""
         keyboard = [
+            [KeyboardButton("🌍 Ommaviy test")],
+            [KeyboardButton("🔒 Shaxsiy test")],
+            [KeyboardButton("🔙 Orqaga")]
+        ]
+        return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=False)
+    
+    def _get_test_subject_keyboard(self):
+        """Test fani tanlash uchun reply keyboard"""
+        keyboard = [
             [KeyboardButton("📐 Matematika"), KeyboardButton("⚡ Fizika")],
             [KeyboardButton("🧪 Kimyo"), KeyboardButton("🌿 Biologiya")],
-            [KeyboardButton("�� Tarix"), KeyboardButton("🌍 Geografiya")],
+            [KeyboardButton("📚 Tarix"), KeyboardButton("🌍 Geografiya")],
             [KeyboardButton("📖 Adabiyot"), KeyboardButton("🗣️ Til")],
             [KeyboardButton("💻 Informatika"), KeyboardButton("📋 Boshqa")],
             [KeyboardButton("🔙 Orqaga")]
@@ -380,7 +389,10 @@ Quyidagi tugmalardan birini tanlang:
             await self._handle_test_type_selection(update, context, text)
         elif step == 'select_category':
             await self._handle_test_category_selection(update, context, text)
+        elif step == 'select_subject':
+            await self._handle_test_subject_selection(update, context, text)
         elif step == 'enter_details':
+            await self._handle_test_details_entry(update, context, text, db_user)
             await self._handle_test_details_entry(update, context, text, db_user)
     
     async def _handle_test_type_selection(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
@@ -424,16 +436,8 @@ Quyidagi tugmalardan birini tanlang:
     async def _handle_test_category_selection(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
         """Test toifasi tanlash"""
         category_map = {
-            '📐 Matematika': TestCategory.MATHEMATICS,
-            '⚡ Fizika': TestCategory.PHYSICS,
-            '🧪 Kimyo': TestCategory.CHEMISTRY,
-            '🌿 Biologiya': TestCategory.BIOLOGY,
-            '📚 Tarix': TestCategory.HISTORY,
-            '🌍 Geografiya': TestCategory.GEOGRAPHY,
-            '📖 Adabiyot': TestCategory.LITERATURE,
-            '🗣️ Til': TestCategory.LANGUAGE,
-            '💻 Informatika': TestCategory.COMPUTER_SCIENCE,
-            '📋 Boshqa': TestCategory.OTHER
+            '🌍 Ommaviy test': TestCategory.PUBLIC,
+            '🔒 Shaxsiy test': TestCategory.PRIVATE
         }
         
         if text == '🔙 Orqaga':
@@ -447,6 +451,44 @@ Quyidagi tugmalardan birini tanlang:
         if text in category_map:
             category = category_map[text]
             context.user_data['test_data']['category'] = category.value
+            
+            await update.message.reply_text(
+                "📝 Endi test fanini tanlang:",
+                reply_markup=self._get_test_subject_keyboard()
+            )
+            context.user_data['test_creation_step'] = 'select_subject'
+        else:
+            await update.message.reply_text(
+                "❌ Iltimos, quyidagi tugmalardan birini tanlang:",
+                reply_markup=self._get_test_category_keyboard()
+            )
+    
+    async def _handle_test_subject_selection(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
+        """Test fani tanlash"""
+        subject_map = {
+            '📐 Matematika': TestSubject.MATHEMATICS,
+            '⚡ Fizika': TestSubject.PHYSICS,
+            '🧪 Kimyo': TestSubject.CHEMISTRY,
+            '🌿 Biologiya': TestSubject.BIOLOGY,
+            '📚 Tarix': TestSubject.HISTORY,
+            '🌍 Geografiya': TestSubject.GEOGRAPHY,
+            '📖 Adabiyot': TestSubject.LITERATURE,
+            '🗣️ Til': TestSubject.LANGUAGE,
+            '💻 Informatika': TestSubject.COMPUTER_SCIENCE,
+            '📋 Boshqa': TestSubject.OTHER
+        }
+        
+        if text == '🔙 Orqaga':
+            await update.message.reply_text(
+                "📝 Test yaratish uchun toifani tanlang:",
+                reply_markup=self._get_test_category_keyboard()
+            )
+            context.user_data['test_creation_step'] = 'select_category'
+            return
+        
+        if text in subject_map:
+            subject = subject_map[text]
+            context.user_data['test_data']['subject'] = subject.value
             
             await update.message.reply_text(
                 "📝 Endi test ma'lumotlarini kiriting:\n\n"
@@ -466,6 +508,11 @@ Quyidagi tugmalardan birini tanlang:
         else:
             await update.message.reply_text(
                 "❌ Iltimos, quyidagi tugmalardan birini tanlang:",
+                reply_markup=self._get_test_subject_keyboard()
+            )
+        else:
+            await update.message.reply_text(
+                "❌ Iltimos, quyidagi tugmalardan birini tanlang:",
                 reply_markup=self._get_test_category_keyboard()
             )
     
@@ -473,10 +520,10 @@ Quyidagi tugmalardan birini tanlang:
         """Test ma'lumotlarini kiritish"""
         if text == '🔙 Orqaga':
             await update.message.reply_text(
-                "📝 Oddiy test yaratish uchun toifani tanlang:",
-                reply_markup=self._get_test_category_keyboard()
+                "📝 Test yaratish uchun fanini tanlang:",
+                reply_markup=self._get_test_subject_keyboard()
             )
-            context.user_data['test_creation_step'] = 'select_category'
+            context.user_data['test_creation_step'] = 'select_subject'
             return
         
         try:
@@ -490,17 +537,32 @@ Quyidagi tugmalardan birini tanlang:
             # Test yaratish
             test = await self.test_creation_service.create_test_from_data(final_data, db_user.id)
             
+            # Natija xabarini tayyorlash
+            result_text = f"✅ Test muvaffaqiyatli yaratildi!\n\n"
+            result_text += f"📝 Nomi: {test.title}\n"
+            result_text += f"📊 Turi: {test.test_type}\n"
+            result_text += f"📂 Toifasi: {test.category}\n"
+            result_text += f"📚 Fani: {test.subject}\n"
+            result_text += f"⏱️ Vaqt: {test.time_limit} daqiqa\n"
+            result_text += f"📈 O'tish balli: {test.passing_score}%\n\n"
+            result_text += f"Test ID: {test.id}\n"
+            
+            # Shaxsiy test uchun maxsus kod
+            if test.category == TestCategory.PRIVATE.value:
+                result_text += f"🔑 Maxsus kod: {test.test_code}\n"
+                result_text += f"🔗 Havola: https://t.me/your_bot?start=test_{test.test_code}"
+            
             await update.message.reply_text(
-                f"✅ Test muvaffaqiyatli yaratildi!\n\n"
-                f"📝 Nomi: {test.title}\n"
-                f"📊 Turi: {test.test_type}\n"
-                f"�� Toifasi: {test.category}\n"
-                f"⏱️ Vaqt: {test.time_limit} daqiqa\n"
-                f"📈 O'tish balli: {test.passing_score}%\n\n"
-                f"Test ID: {test.id}",
+                result_text,
                 reply_markup=self._get_main_keyboard(db_user.role)
             )
             
+            context.user_data['creating_test'] = False
+            context.user_data['test_creation_step'] = None
+            context.user_data['test_data'] = {}
+            
+        except Exception as e:
+            await update.message.reply_text(f"❌ Xatolik: {str(e)}")
             context.user_data['creating_test'] = False
             context.user_data['test_creation_step'] = None
             context.user_data['test_data'] = {}

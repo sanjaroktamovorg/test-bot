@@ -1,5 +1,5 @@
 from sqlalchemy import Enum
-from src.models.test_types import TestType, TestCategory
+from src.models.test_types import TestType, TestCategory, TestSubject, generate_test_code
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, Float
 from src.database.database import Base
 from sqlalchemy.orm import relationship
@@ -16,6 +16,8 @@ class TestStatus(enum.Enum):
 class Test(Base):
 
     test_type = Column(String(50), default=TestType.SIMPLE.value)
+
+    category = Column(String(50), default=TestCategory.PUBLIC.value)\n    subject = Column(String(50), nullable=True)\n    test_code = Column(String(20), unique=True, nullable=True)  # Shaxsiy testlar uchun
     category = Column(String(50), nullable=True)
     __tablename__ = "tests"
     
