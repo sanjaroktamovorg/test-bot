@@ -1,9 +1,10 @@
+from sqlalchemy import Enum
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Enum
-from sqlalchemy.ext.declarative import declarative_base
+from src.database.database import Base
 from sqlalchemy.sql import func
 import enum
 
-Base = declarative_base()
+# Base imported from database
 
 class UserRole(enum.Enum):
     STUDENT = "student"

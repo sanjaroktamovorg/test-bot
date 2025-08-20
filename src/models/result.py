@@ -1,9 +1,9 @@
 from sqlalchemy import Column, Integer, String, Text, Float, DateTime, ForeignKey, JSON
-from sqlalchemy.ext.declarative import declarative_base
+from src.database.database import Base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-Base = declarative_base()
+# Base imported from database
 
 class TestResult(Base):
     __tablename__ = "test_results"

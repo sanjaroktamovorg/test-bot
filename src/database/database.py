@@ -24,7 +24,12 @@ class Database:
     
     def create_tables(self):
         """Barcha jadvallarni yaratish"""
-        from src.models import User, Test, Question, Answer, TestResult
+        # Barcha modellarni import qilish
+        from src.models.user import User
+        from src.models.test import Test, Question, Answer
+        from src.models.result import TestResult
+        
+        # Barcha jadvallarni yaratish
         Base.metadata.create_all(bind=self.engine)
     
     def get_session(self):

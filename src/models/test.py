@@ -1,10 +1,11 @@
+from sqlalchemy import Enum
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, Float
-from sqlalchemy.ext.declarative import declarative_base
+from src.database.database import Base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import enum
 
-Base = declarative_base()
+# Base imported from database
 
 class TestStatus(enum.Enum):
     DRAFT = "draft"
