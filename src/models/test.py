@@ -1,12 +1,10 @@
-from sqlalchemy import Enum
-from src.models.test_types import TestType, TestCategory, TestSubject, generate_test_code
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, Float
-from src.database.database import Base
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import enum
-
-# Base imported from database
+from src.database.database import Base
+from src.models.test_types import TestType, TestCategory, TestSubject, generate_test_code
 
 class TestStatus(enum.Enum):
     DRAFT = "draft"
@@ -14,20 +12,19 @@ class TestStatus(enum.Enum):
     INACTIVE = "inactive"
 
 class Test(Base):
-
-    test_type = Column(String(50), default=TestType.SIMPLE.value)
-
-    category = Column(String(50), default=TestCategory.PUBLIC.value)\n    subject = Column(String(50), nullable=True)\n    test_code = Column(String(20), unique=True, nullable=True)  # Shaxsiy testlar uchun
-    category = Column(String(50), nullable=True)
     __tablename__ = "tests"
     
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     teacher_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    status = Column(Enum(TestStatus), default=TestStatus.DRAFT)
+    status = Column(String(50), default=TestStatus.DRAFT.value)
     time_limit = Column(Integer, nullable=True)  # daqiqalarda
     passing_score = Column(Float, nullable=True)  # foizda
+    test_type = Column(String(50), default=TestType.SIMPLE.value)
+    category = Column(String(50), default=TestCategory.PUBLIC.value)
+    subject = Column(String(50), nullable=True)
+    test_code = Column(String(20), unique=True, nullable=True)  # Shaxsiy testlar uchun
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     

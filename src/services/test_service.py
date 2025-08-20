@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from src.models import Test, Question, Answer, TestResult, TestStatus
+from src.models.test_types import TestCategory
 from src.database import Database
 
 class TestService:
@@ -51,8 +52,6 @@ class TestService:
                 Test.test_code == test_code,
                 Test.status == TestStatus.ACTIVE
             ).first()
-        finally:
-            self.db.close_session(session)
         finally:
             self.db.close_session(session)
     
