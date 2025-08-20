@@ -1,0 +1,29 @@
+# Telegram Bot
+python-telegram-bot==20.7
+python-telegram-bot[webhooks]==20.7
+
+# API Framework
+fastapi==0.104.1
+uvicorn==0.24.0
+
+# Database
+sqlalchemy==2.0.23
+alembic==1.12.1
+
+# Environment
+python-dotenv==1.0.0
+
+# Utilities
+pydantic==2.5.0
+python-multipart==0.0.6
+
+# Logging
+loguru==0.7.2
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+
+# Development
+black==23.11.0
+flake8==6.1.0
