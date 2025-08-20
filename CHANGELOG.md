@@ -1,5 +1,34 @@
 # Test Bot - Changelog
 
+## [v0.9] - 2025-08-20
+
+### ✅ Database yangilandi
+- **Yangi ustunlar qo'shildi** - test_type, category, subject, test_code
+- **Database jadvali qayta yaratildi** - Yangi schema bilan
+- **Test turi tizimi** - SIMPLE, DTM, NATIONAL_CERTIFICATE, OPEN
+- **Test toifasi** - PUBLIC, PRIVATE
+- **Maxsus kod tizimi** - Shaxsiy testlar uchun
+
+### 🔧 Texnik o'zgarishlar
+- Database migration to'liq amalga oshirildi
+- Yangi modellar to'g'ri ishlayapti
+- Bot polling rejimida ishlayapti
+- Xatoliklar bartaraf etildi
+
+### 🎯 Yangi funksiyalar
+- **Test turi tanlash** - Oddiy test, DTM, Milliy sertifikat, Ochiq test
+- **Test toifasi** - Ommaviy va shaxsiy testlar
+- **Maxsus kod** - Shaxsiy testlar uchun maxsus kod
+- **Fan tanlash** - Test uchun fan belgilash
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- Database to'g'ri ishlayapti ✅
+- Modullar to'g'ri ishlayapti ✅
+- Telegram API bilan bog'lanish ✅
+
+---
+
 ## [v0.6] - 2025-08-20
 
 ### ✅ Qo'shilgan funksiyalar
