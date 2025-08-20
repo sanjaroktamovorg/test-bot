@@ -3,8 +3,6 @@ from src.database.database import Base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-# Base imported from database
-
 class TestResult(Base):
     __tablename__ = "test_results"
     
@@ -21,7 +19,7 @@ class TestResult(Base):
     
     # Relationships
     test = relationship("Test", back_populates="results")
-    student = relationship("User")
+    student = relationship("User", back_populates="results")
     
     def __repr__(self):
         return f"<TestResult(id={self.id}, test_id={self.test_id}, student_id={self.student_id}, score={self.score})>"

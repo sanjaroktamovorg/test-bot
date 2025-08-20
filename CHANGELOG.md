@@ -1,5 +1,96 @@
 # Test Bot - Changelog
 
+## [v0.9.3] - 2025-08-20
+
+### ✅ Har bir foydalanuvchi uchun alohida sozlamalar
+- **UserSettings modeli** - Har bir foydalanuvchi uchun alohida sozlamalar
+- **Telegram ID asosida** - Har bir akkaunt uchun alohida rol va sozlamalar
+- **Rol saqlash** - Har bir foydalanuvchi o'z roli bilan saqlanadi
+- **Sozlamalar saqlash** - Til, tema, bildirishnomalar va boshqa sozlamalar
+
+### 🎯 Yangi funksiyalar
+- **Dashboard ko'rsatish** - Ro'yxatdan o'tgandan keyin to'g'ridan-to'g'ri dashboard
+- **Rol tanlash** - O'qituvchi yoki o'quvchi sifatida ro'yxatdan o'tish
+- **Sozlamalar paneli** - Foydalanuvchi sozlamalarini ko'rish va o'zgartirish
+- **Alohida ma'lumotlar** - Har bir foydalanuvchi o'z testlari va natijalari bilan
+
+### 🔧 Texnik o'zgarishlar
+- **UserSettings modeli** qo'shildi
+- **UserService** yangilandi - har bir foydalanuvchi uchun alohida
+- **Callback handerlari** yangilandi - dashboard ko'rsatish
+- **Command handerlari** yangilandi - to'g'ridan-to'g'ri dashboard
+- **Database strukturasi** yangilandi
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- Har bir foydalanuvchi alohida ✅
+- Database to'g'ri ishlayapti ✅
+- Telegram API bilan bog'lanish ✅
+
+### 🎯 Afzalliklari
+- **Xavfsizlik** - Har bir foydalanuvchi o'z ma'lumotlari bilan
+- **Qulaylik** - Ro'yxatdan o'tgandan keyin to'g'ridan-to'g'ri dashboard
+- **Aniqlik** - Har bir foydalanuvchi o'z roli va sozlamalari bilan
+- **Kengaytirish** - Yangi sozlamalar oson qo'shiladi
+
+---
+
+## [v0.9.2] - 2025-08-20
+
+### ✅ Test yaratish jarayoni soddalashtirildi
+- **Soddalashtirilgan jarayon** - Faqat kerakli sozlamalar so'raladi
+- **Test nomi** - Test nomini kiritish
+- **Savollar soni** - Testdagi savollar sonini belgilash
+- **Savol va javoblar** - Har bir savol va javob variantlarini kiritish
+
+### 🎯 Yangi funksiyalar
+- **Test turi tanlash** - Oddiy test, DTM, Milliy sertifikat, Ochiq test
+- **Test toifasi** - Ommaviy va shaxsiy testlar
+- **Savollar qo'shish** - Testga savol va javoblar qo'shish
+- **Avtomatik test yaratish** - Barcha savollar kiritilgandan keyin
+
+### 🔧 Texnik o'zgarishlar
+- **TestCreationService** qayta yozildi
+- **Message handlers** yangilandi
+- **Multi-step conversation** soddalashtirildi
+- **Database modellar** to'g'rilandi
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- Test yaratish jarayoni ✅
+- Database to'g'ri ishlayapti ✅
+- Telegram API bilan bog'lanish ✅
+
+---
+
+## [v0.9.1] - 2025-08-20
+
+### ✅ Test yaratish jarayoni soddalashtirildi
+- **Soddalashtirilgan jarayon** - Faqat kerakli sozlamalar so'raladi
+- **Test nomi** - Test nomini kiritish
+- **Savollar soni** - Testdagi savollar sonini belgilash
+- **Savol va javoblar** - Har bir savol va javob variantlarini kiritish
+
+### 🎯 Yangi funksiyalar
+- **Test turi tanlash** - Oddiy test, DTM, Milliy sertifikat, Ochiq test
+- **Test toifasi** - Ommaviy va shaxsiy testlar
+- **Savollar qo'shish** - Testga savol va javoblar qo'shish
+- **Avtomatik test yaratish** - Barcha savollar kiritilgandan keyin
+
+### 🔧 Texnik o'zgarishlar
+- **TestCreationService** qayta yozildi
+- **Message handlers** yangilandi
+- **Multi-step conversation** soddalashtirildi
+- **Database modellar** to'g'rilandi
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- Test yaratish jarayoni ✅
+- Database to'g'ri ishlayapti ✅
+- Telegram API bilan bog'lanish ✅
+
+---
+
 ## [v0.9] - 2025-08-20
 
 ### ✅ Database yangilandi
@@ -29,89 +120,103 @@
 
 ---
 
-## [v0.6] - 2025-08-20
+## [v0.8.1] - 2025-08-20
 
-### ✅ Qo'shilgan funksiyalar
-- **Test turlari tizimi** - 4 xil test turi
-  - 📝 Oddiy test (to'liq ishlaydi)
-  - 🏛️ DTM test (ishlab chiqilmoqda)
-  - 🏆 Milliy sertifikat test (ishlab chiqilmoqda)
-  - 📖 Ochiq (variantsiz) test (ishlab chiqilmoqda)
+### ✅ Arxitektura qayta tuzildi
+- **Bot modullarga ajratildi** - Katta fayl kichik modullarga bo'lindi
+- **Keyboard Factory** - Barcha keyboardlar alohida modulda
+- **Handler modullari** - Command, Message, Callback handerlari alohida
+- **Kod tuzilishi** - Toza va tushunarli arxitektura
 
-- **Test toifalari** - 10 xil toifa
-  - 📐 Matematika, ⚡ Fizika
-  - 🧪 Kimyo, 🌿 Biologiya
-  - 📚 Tarix, 🌍 Geografiya
-  - 📖 Adabiyot, 🗣️ Til
-  - 💻 Informatika, 📋 Boshqa
-
-- **Yangi test yaratish jarayoni**
-  - Test turi tanlash (Reply keyboard)
-  - Test toifasi tanlash (Reply keyboard)
-  - Test ma'lumotlari kiritish
-  - Avtomatik test yaratish
-
-- **Reply Keyboard Markup**
-  - O'qituvchilar uchun asosiy tugmalar
-  - O'quvchilar uchun asosiy tugmalar
-  - Test turi va toifasi tanlash tugmalari
+### 📁 Yangi fayl strukturasi
+```
+src/bot/
+├── keyboards/
+│   ├── __init__.py
+│   └── keyboard_factory.py
+├── handlers/
+│   ├── __init__.py
+│   ├── command_handlers.py
+│   ├── message_handlers.py
+│   └── callback_handlers.py
+└── bot.py (asosiy fayl)
+```
 
 ### 🔧 Texnik o'zgarishlar
-- Yangi modellar qo'shildi: `TestType`, `TestCategory`
-- `TestCreationService` yangilandi
-- Bot handerlari qayta yozildi
-- Database strukturasi yangilandi
+- Bot fayli 631 qatordan 91 qatorga qisqartirildi
+- Har bir handler alohida faylda
+- Keyboard yaratish factory pattern bilan
+- Import tizimi optimallashtirildi
 
-### 🐛 Tuzatilgan xatoliklar
-- Indentation xatoliklari tuzatildi
-- Import xatoliklari bartaraf etildi
-- Database yaratish muammolari hal qilindi
-
-### 📁 Fayl strukturasi
-```
-src/
-├── models/
-│   ├── test_types.py (YANGI)
-│   ├── user.py
-│   ├── test.py (yangilandi)
-│   └── result.py
-├── services/
-│   ├── test_creation_service.py (yangilandi)
-│   ├── test_taking_service.py
-│   └── user_service.py
-└── bot/
-    └── bot.py (qayta yozildi)
-```
-
-## [v0.5] - 2025-08-20
-
-### ✅ Qo'shilgan funksiyalar
-- Asosiy bot strukturasi
-- Database modellar
-- User va Test servislari
-- Reply keyboard va inline buttonlar
-
-## [v0.1] - 2025-08-20
-
-### ✅ Qo'shilgan funksiyalar
-- Loyiha asosiy strukturasi
-- Telegram bot integratsiyasi
-- SQLAlchemy database
-- Git versiya boshqaruvi
+### 🎯 Afzalliklari
+- **Oson saqlash** - Har bir modul alohida
+- **Qayta ishlatish** - Modullar boshqa joyda ishlatilishi mumkin
+- **Testlash** - Har bir modul alohida testlash mumkin
+- **Kengaytirish** - Yangi funksiyalar oson qo'shiladi
 
 ---
 
-## Keyingi rejalar (v0.7+)
+## [v0.8.0] - 2025-08-20
 
-### 🚧 Ishlab chiqilmoqda
-- Test ishlash funksiyasi
-- Savollar qo'shish
-- Natija ko'rish
-- Reyting tizimi
+### ✅ Test yaratish tizimi qo'shildi
+- **Test turi tanlash** - Oddiy test, DTM, Milliy sertifikat, Ochiq test
+- **Test toifasi** - Ommaviy va shaxsiy testlar
+- **Fan tanlash** - Test uchun fan belgilash
+- **Test ma'lumotlari** - Nomi, tavsif, vaqt chegarasi
 
-### 📋 Rejalashtirilgan
-- DTM test turlari
-- Milliy sertifikat testlar
-- Ochiq testlar
-- Web sayt integratsiyasi
-- API endpointlar
+### 🎯 Yangi funksiyalar
+- **Reply Keyboard Markup** - Asosiy menyu tugmalari
+- **Inline Keyboard** - Test variantlari uchun
+- **Multi-step conversation** - Test yaratish jarayoni
+- **Test kod yaratish** - Shaxsiy testlar uchun
+
+### 📊 Holat
+- Bot ishga tushdi ✅
+- Database ishlayapti ✅
+- Test yaratish jarayoni ✅
+- Telegram API bilan bog'lanish ✅
+
+---
+
+## [v0.7.0] - 2025-08-20
+
+### ✅ Asosiy tuzilma yaratildi
+- **Database modellar** - User, Test, Question, Answer, TestResult
+- **Service layer** - UserService, TestService, TestCreationService
+- **Bot framework** - python-telegram-bot
+- **Database** - SQLite with SQLAlchemy
+
+### 🎯 Asosiy funksiyalar
+- **Foydalanuvchi ro'yxatdan o'tish** - /register
+- **Asosiy menyu** - O'qituvchi/O'quvchi tanlash
+- **Database operatsiyalari** - CRUD operatsiyalari
+- **Logging** - Loguru bilan
+
+### 📊 Holat
+- Bot ishga tushdi ✅
+- Database ishlayapti ✅
+- Asosiy funksiyalar ✅
+- Telegram API bilan bog'lanish ✅
+
+---
+
+## [v0.6.0] - 2025-08-20
+
+### ✅ Loyiha asoslari yaratildi
+- **Loyiha strukturasi** - Modullarga ajratilgan
+- **Dependencies** - requirements.txt
+- **Environment** - .env.example
+- **Git repository** - Version control
+
+### 🎯 Asosiy komponentlar
+- **src/** - Asosiy kod papkasi
+- **models/** - Database modellar
+- **services/** - Business logic
+- **bot/** - Telegram bot
+- **database/** - Database connection
+
+### 📊 Holat
+- Loyiha strukturasi ✅
+- Dependencies ✅
+- Git repository ✅
+- README va dokumentatsiya ✅

@@ -4,7 +4,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import enum
 from src.database.database import Base
-from src.models.test_types import TestType, TestCategory, TestSubject, generate_test_code
+from src.models.test_types import TestType, TestCategory, TestSubject
 
 class TestStatus(enum.Enum):
     DRAFT = "draft"
@@ -29,6 +29,7 @@ class Test(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     # Relationships
+    teacher = relationship("User", back_populates="tests")
     questions = relationship("Question", back_populates="test", cascade="all, delete-orphan")
     results = relationship("TestResult", back_populates="test")
     

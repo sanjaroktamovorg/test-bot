@@ -51,7 +51,7 @@ class TestBot:
         self.application.add_handler(CommandHandler("my_results", self.message_handlers.my_results_command))
         
         # Callback handerlari
-        self.application.add_handler(CallbackQueryHandler(self.callback_handlers.button_callback))
+        self.application.add_handler(CallbackQueryHandler(self.callback_handlers.handle_callback))
         
         # Xabar handerlari
         self.application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.message_handlers.handle_message))

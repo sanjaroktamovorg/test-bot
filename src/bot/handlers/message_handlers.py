@@ -10,9 +10,12 @@ class MessageHandlers:
         self.bot = bot_instance
     
     async def handle_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Xabar handerlari"""
+        """Xabar handerlari - har bir foydalanuvchi uchun alohida"""
         user = update.effective_user
         text = update.message.text
+        
+        # Foydalanuvchi roli olish
+        user_role = await self.bot.user_service.get_user_role(user.id)
         
         # Reply keyboard tugmalarini tekshirish
         if text == "📝 Test yaratish":
@@ -34,7 +37,7 @@ class MessageHandlers:
         elif text == "❓ Yordam":
             await self.bot.command_handlers.help_command(update, context)
         elif text == "⚙️ Sozlamalar":
-            await update.message.reply_text("⚙️ Sozlamalar funksiyasi ishlab chiqilmoqda...")
+            await self.settings_command(update, context)
         elif context.user_data.get('creating_test'):
             # Test yaratish logikasi
             await self._handle_test_creation(update, context, text)
@@ -42,11 +45,11 @@ class MessageHandlers:
             await update.message.reply_text("❓ Tushunarsiz xabar. /help komandasi bilan yordam oling.")
     
     async def create_test_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Test yaratish komandasi"""
+        """Test yaratish komandasi - faqat o'qituvchilar uchun"""
         user = update.effective_user
-        db_user = await self.bot.user_service.get_user_by_telegram_id(user.id)
+        user_role = await self.bot.user_service.get_user_role(user.id)
         
-        if not db_user or db_user.role != UserRole.TEACHER:
+        if user_role != UserRole.TEACHER:
             await update.message.reply_text("❌ Bu funksiya faqat o'qituvchilar uchun!")
             return
         
@@ -77,14 +80,15 @@ class MessageHandlers:
         await update.message.reply_text(text, reply_markup=reply_markup)
     
     async def my_tests_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Mening testlarim"""
+        """Mening testlarim - faqat o'qituvchilar uchun"""
         user = update.effective_user
-        db_user = await self.bot.user_service.get_user_by_telegram_id(user.id)
+        user_role = await self.bot.user_service.get_user_role(user.id)
         
-        if not db_user or db_user.role != UserRole.TEACHER:
+        if user_role != UserRole.TEACHER:
             await update.message.reply_text("❌ Bu funksiya faqat o'qituvchilar uchun!")
             return
         
+        db_user = await self.bot.user_service.get_user_by_telegram_id(user.id)
         tests = await self.bot.test_service.get_teacher_tests(db_user.id)
         
         if not tests:
@@ -101,25 +105,26 @@ class MessageHandlers:
         await update.message.reply_text(text, reply_markup=reply_markup)
     
     async def results_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Test natijalari"""
+        """Test natijalari - faqat o'qituvchilar uchun"""
         user = update.effective_user
-        db_user = await self.bot.user_service.get_user_by_telegram_id(user.id)
+        user_role = await self.bot.user_service.get_user_role(user.id)
         
-        if not db_user or db_user.role != UserRole.TEACHER:
+        if user_role != UserRole.TEACHER:
             await update.message.reply_text("❌ Bu funksiya faqat o'qituvchilar uchun!")
             return
         
         await update.message.reply_text("📊 Test natijalari funksiyasi ishlab chiqilmoqda...")
     
     async def my_results_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Mening natijalarim"""
+        """Mening natijalarim - faqat o'quvchilar uchun"""
         user = update.effective_user
-        db_user = await self.bot.user_service.get_user_by_telegram_id(user.id)
+        user_role = await self.bot.user_service.get_user_role(user.id)
         
-        if not db_user or db_user.role != UserRole.STUDENT:
+        if user_role != UserRole.STUDENT:
             await update.message.reply_text("❌ Bu funksiya faqat o'quvchilar uchun!")
             return
         
+        db_user = await self.bot.user_service.get_user_by_telegram_id(user.id)
         results = await self.bot.test_service.get_student_results(db_user.id)
         
         if not results:
@@ -135,8 +140,44 @@ class MessageHandlers:
         reply_markup = KeyboardFactory.get_results_keyboard(results)
         await update.message.reply_text(text, reply_markup=reply_markup)
     
+    async def settings_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Sozlamalar - har bir foydalanuvchi uchun alohida"""
+        user = update.effective_user
+        user_settings = await self.bot.user_service.get_user_settings(user.id)
+        
+        if not user_settings:
+            await update.message.reply_text("❌ Foydalanuvchi sozlamalari topilmadi!")
+            return
+        
+        settings_text = f"""
+⚙️ Foydalanuvchi sozlamalari
+
+👤 Foydalanuvchi: {user.first_name}
+🆔 Telegram ID: {user.id}
+🎭 Rol: {user_settings.role}
+🌐 Til: {user_settings.language}
+🎨 Tema: {user_settings.theme}
+🔔 Bildirishnomalar: {'✅ Yoqilgan' if user_settings.notifications else '❌ Ochrirlgan'}
+
+📊 Test sozlamalari:
+📝 Default test turi: {user_settings.default_test_type}
+📂 Default toifa: {user_settings.default_test_category}
+📚 Default fan: {user_settings.default_subject or 'Belgilanmagan'}
+        """
+        
+        keyboard = [
+            [KeyboardButton("🔄 Rol o'zgartirish")],
+            [KeyboardButton("🌐 Til o'zgartirish")],
+            [KeyboardButton("🎨 Tema o'zgartirish")],
+            [KeyboardButton("🔔 Bildirishnomalar")],
+            [KeyboardButton("�� Orqaga")]
+        ]
+        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+        
+        await update.message.reply_text(settings_text, reply_markup=reply_markup)
+    
     async def _handle_test_creation(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
-        """Test yaratish jarayonini boshqarish"""
+        """Test yaratish jarayonini boshqarish - Soddalashtirilgan"""
         step = context.user_data.get('test_creation_step', 'select_type')
         user = update.effective_user
         db_user = await self.bot.user_service.get_user_by_telegram_id(user.id)
@@ -145,10 +186,14 @@ class MessageHandlers:
             await self._handle_test_type_selection(update, context, text)
         elif step == 'select_category':
             await self._handle_test_category_selection(update, context, text)
-        elif step == 'select_subject':
-            await self._handle_test_subject_selection(update, context, text)
-        elif step == 'enter_details':
-            await self._handle_test_details_entry(update, context, text, db_user)
+        elif step == 'enter_title':
+            await self._handle_test_title_entry(update, context, text, db_user)
+        elif step == 'enter_questions_count':
+            await self._handle_questions_count_entry(update, context, text, db_user)
+        elif step == 'enter_question':
+            await self._handle_question_entry(update, context, text, db_user)
+        elif step == 'enter_answers':
+            await self._handle_answers_entry(update, context, text, db_user)
     
     async def _handle_test_type_selection(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
         """Test turi tanlash"""
@@ -212,33 +257,19 @@ class MessageHandlers:
             context.user_data['test_data']['category'] = category.value
             
             await update.message.reply_text(
-                "📝 Endi test fanini tanlang:",
-                reply_markup=KeyboardFactory.get_test_subject_keyboard()
+                "📝 Endi test nomini kiriting:\n\n"
+                "Misol: Algebra testi, Fizika testi, Tarix testi...",
+                reply_markup=KeyboardFactory.get_back_keyboard()
             )
-            context.user_data['test_creation_step'] = 'select_subject'
+            context.user_data['test_creation_step'] = 'enter_title'
         else:
             await update.message.reply_text(
                 "❌ Iltimos, quyidagi tugmalardan birini tanlang:",
                 reply_markup=KeyboardFactory.get_test_category_keyboard()
             )
     
-    async def _handle_test_subject_selection(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
-        """Test fani tanlash"""
-        from src.models.test_types import TestSubject
-        
-        subject_map = {
-            '📐 Matematika': TestSubject.MATHEMATICS,
-            '⚡ Fizika': TestSubject.PHYSICS,
-            '🧪 Kimyo': TestSubject.CHEMISTRY,
-            '🌿 Biologiya': TestSubject.BIOLOGY,
-            '📚 Tarix': TestSubject.HISTORY,
-            '🌍 Geografiya': TestSubject.GEOGRAPHY,
-            '📖 Adabiyot': TestSubject.LITERATURE,
-            '🗣️ Til': TestSubject.LANGUAGE,
-            '💻 Informatika': TestSubject.COMPUTER_SCIENCE,
-            '📋 Boshqa': TestSubject.OTHER
-        }
-        
+    async def _handle_test_title_entry(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str, db_user):
+        """Test nomini kiritish"""
         if text == '🔙 Orqaga':
             await update.message.reply_text(
                 "📝 Test yaratish uchun toifani tanlang:",
@@ -247,78 +278,160 @@ class MessageHandlers:
             context.user_data['test_creation_step'] = 'select_category'
             return
         
-        if text in subject_map:
-            subject = subject_map[text]
-            context.user_data['test_data']['subject'] = subject.value
-            
-            await update.message.reply_text(
-                "📝 Endi test ma'lumotlarini kiriting:\n\n"
-                "Quyidagi formatda yuboring:\n\n"
-                "Test nomi: [Test nomi]\n"
-                "Tavsif: [Test tavsifi]\n"
-                "Vaqt chegarasi: [daqiqalarda]\n"
-                "O'tish balli: [foizda]\n\n"
-                "Misol:\n"
-                "Test nomi: Algebra testi\n"
-                "Tavsif: Kvadrat tenglamalar\n"
-                "Vaqt chegarasi: 30\n"
-                "O'tish balli: 70",
-                reply_markup=KeyboardFactory.get_back_keyboard()
-            )
-            context.user_data['test_creation_step'] = 'enter_details'
-        else:
-            await update.message.reply_text(
-                "❌ Iltimos, quyidagi tugmalardan birini tanlang:",
-                reply_markup=KeyboardFactory.get_test_subject_keyboard()
-            )
-    
-    async def _handle_test_details_entry(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str, db_user):
-        """Test ma'lumotlarini kiritish"""
-        from src.models.test_types import TestCategory
+        context.user_data['test_data']['title'] = text
         
+        await update.message.reply_text(
+            f"📝 Test nomi: {text}\n\n"
+            f"Endi testdagi savollar sonini kiriting (1-50):",
+            reply_markup=KeyboardFactory.get_back_keyboard()
+        )
+        context.user_data['test_creation_step'] = 'enter_questions_count'
+    
+    async def _handle_questions_count_entry(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str, db_user):
+        """Savollar sonini kiritish"""
         if text == '🔙 Orqaga':
             await update.message.reply_text(
-                "📝 Test yaratish uchun fanini tanlang:",
-                reply_markup=KeyboardFactory.get_test_subject_keyboard()
+                "📝 Endi test nomini kiriting:\n\n"
+                "Misol: Algebra testi, Fizika testi, Tarix testi...",
+                reply_markup=KeyboardFactory.get_back_keyboard()
             )
-            context.user_data['test_creation_step'] = 'select_subject'
+            context.user_data['test_creation_step'] = 'enter_title'
             return
         
         try:
-            # Test ma'lumotlarini parse qilish
-            test_data = context.user_data['test_data']
-            parsed_data = await self.bot.test_creation_service.parse_test_data(text)
+            questions_count = int(text)
+            if questions_count < 1 or questions_count > 50:
+                await update.message.reply_text(
+                    "❌ Savollar soni 1-50 oralig'ida bo'lishi kerak!",
+                    reply_markup=KeyboardFactory.get_back_keyboard()
+                )
+                return
             
-            # Barcha ma'lumotlarni birlashtirish
-            final_data = {**test_data, **parsed_data}
-            
-            # Test yaratish
-            test = await self.bot.test_creation_service.create_test_from_data(final_data, db_user.id)
-            
-            # Natija xabarini tayyorlash
-            result_text = f"✅ Test muvaffaqiyatli yaratildi!\n\n"
-            result_text += f"📝 Nomi: {test.title}\n"
-            result_text += f"📊 Turi: {test.test_type}\n"
-            result_text += f"📂 Toifasi: {test.category}\n"
-            result_text += f"📚 Fani: {test.subject}\n"
-            result_text += f"⏱️ Vaqt: {test.time_limit} daqiqa\n"
-            result_text += f"📈 O'tish balli: {test.passing_score}%\n\n"
-            result_text += f"Test ID: {test.id}\n"
-            
-            # Shaxsiy test uchun maxsus kod
-            if test.category == TestCategory.PRIVATE.value:
-                result_text += f"🔑 Maxsus kod: {test.test_code}\n"
-                result_text += f"🔗 Havola: https://t.me/your_bot?start=test_{test.test_code}"
+            context.user_data['test_data']['questions_count'] = questions_count
+            context.user_data['current_question'] = 1
             
             await update.message.reply_text(
-                result_text,
-                reply_markup=KeyboardFactory.get_main_keyboard(db_user.role)
+                f"📝 Savollar soni: {questions_count}\n\n"
+                f"1-savolni kiriting:",
+                reply_markup=KeyboardFactory.get_back_keyboard()
+            )
+            context.user_data['test_creation_step'] = 'enter_question'
+            
+        except ValueError:
+            await update.message.reply_text(
+                "❌ Iltimos, raqam kiriting!",
+                reply_markup=KeyboardFactory.get_back_keyboard()
+            )
+    
+    async def _handle_question_entry(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str, db_user):
+        """Savolni kiritish"""
+        if text == '🔙 Orqaga':
+            questions_count = context.user_data['test_data']['questions_count']
+            await update.message.reply_text(
+                f"📝 Savollar soni: {questions_count}\n\n"
+                f"Endi testdagi savollar sonini kiriting (1-50):",
+                reply_markup=KeyboardFactory.get_back_keyboard()
+            )
+            context.user_data['test_creation_step'] = 'enter_questions_count'
+            return
+        
+        current_question = context.user_data['current_question']
+        context.user_data['current_question_text'] = text
+        
+        await update.message.reply_text(
+            f"📝 {current_question}-savol: {text}\n\n"
+            f"Endi javob variantlarini kiriting (A, B, C, D formatida):\n\n"
+            f"Misol:\n"
+            f"A) Birinchi javob\n"
+            f"B) Ikkinchi javob\n"
+            f"C) Uchinchi javob\n"
+            f"D) To'rtinchi javob\n\n"
+            f"To'g'ri javob: A",
+            reply_markup=KeyboardFactory.get_back_keyboard()
+        )
+        context.user_data['test_creation_step'] = 'enter_answers'
+    
+    async def _handle_answers_entry(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str, db_user):
+        """Javoblarni kiritish"""
+        if text == '🔙 Orqaga':
+            current_question = context.user_data['current_question']
+            await update.message.reply_text(
+                f"{current_question}-savolni kiriting:",
+                reply_markup=KeyboardFactory.get_back_keyboard()
+            )
+            context.user_data['test_creation_step'] = 'enter_question'
+            return
+        
+        try:
+            # Javoblarni parse qilish
+            lines = text.split('\n')
+            answers = []
+            correct_answer = None
+            
+            for line in lines:
+                line = line.strip()
+                if line.startswith(('A)', 'B)', 'C)', 'D)')):
+                    answer_text = line[2:].strip()
+                    answers.append(answer_text)
+                elif line.startswith('To\'g\'ri javob:'):
+                    correct = line.split(':')[1].strip().upper()
+                    if correct in ['A', 'B', 'C', 'D']:
+                        correct_answer = ord(correct) - ord('A')  # 0, 1, 2, 3
+            
+            if len(answers) != 4 or correct_answer is None:
+                await update.message.reply_text(
+                    "❌ Iltimos, 4 ta javob variantini va to'g'ri javobni kiriting!\n\n"
+                    f"Misol:\n"
+                    f"A) Birinchi javob\n"
+                    f"B) Ikkinchi javob\n"
+                    f"C) Uchinchi javob\n"
+                    f"D) To'rtinchi javob\n\n"
+                    f"To'g'ri javob: A",
+                    reply_markup=KeyboardFactory.get_back_keyboard()
+                )
+                return
+            
+            # Test yaratish (agar birinchi savol bo'lsa)
+            current_question = context.user_data['current_question']
+            if current_question == 1:
+                test_data = context.user_data['test_data']
+                test = await self.bot.test_creation_service.create_simple_test(test_data, db_user.id)
+                context.user_data['test_id'] = test.id
+            
+            # Savol va javoblarni qo'shish
+            test_id = context.user_data['test_id']
+            question_text = context.user_data['current_question_text']
+            
+            await self.bot.test_creation_service.add_question_to_test(
+                test_id, question_text, answers, correct_answer
             )
             
-            context.user_data['creating_test'] = False
-            context.user_data['test_creation_step'] = None
-            context.user_data['test_data'] = {}
+            questions_count = context.user_data['test_data']['questions_count']
             
+            if current_question < questions_count:
+                # Keyingi savol
+                context.user_data['current_question'] = current_question + 1
+                await update.message.reply_text(
+                    f"✅ {current_question}-savol qo'shildi!\n\n"
+                    f"{current_question + 1}-savolni kiriting:",
+                    reply_markup=KeyboardFactory.get_back_keyboard()
+                )
+                context.user_data['test_creation_step'] = 'enter_question'
+            else:
+                # Test tugadi
+                await update.message.reply_text(
+                    f"✅ Test muvaffaqiyatli yaratildi!\n\n"
+                    f"📝 Nomi: {context.user_data['test_data']['title']}\n"
+                    f"📊 Savollar soni: {questions_count}\n"
+                    f"📂 Toifasi: {context.user_data['test_data']['category']}\n\n"
+                    f"Test ID: {test_id}",
+                    reply_markup=KeyboardFactory.get_main_keyboard(UserRole.TEACHER)
+                )
+                
+                context.user_data['creating_test'] = False
+                context.user_data['test_creation_step'] = None
+                context.user_data['test_data'] = {}
+                
         except Exception as e:
             await update.message.reply_text(f"❌ Xatolik: {str(e)}")
             context.user_data['creating_test'] = False

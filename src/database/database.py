@@ -28,7 +28,6 @@ class Database:
         from src.models.user import User
         from src.models.test import Test, Question, Answer
         from src.models.result import TestResult
-        from src.models.test_types import TestTemplate
         
         # Barcha jadvallarni yaratish
         Base.metadata.create_all(bind=self.engine)

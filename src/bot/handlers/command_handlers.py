@@ -36,7 +36,7 @@ Boshlash uchun ro'yxatdan o'ting.
             
             await update.message.reply_text(welcome_text, reply_markup=reply_markup)
         else:
-            # Ro'yxatdan o'tgan foydalanuvchi
+            # Ro'yxatdan o'tgan foydalanuvchi - to'g'ridan-to'g'ri dashboard
             await self.menu_command(update, context)
     
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -92,24 +92,28 @@ Boshlash uchun ro'yxatdan o'ting.
             await update.message.reply_text("❌ Ro'yxatdan o'tishda xatolik yuz berdi!")
     
     async def menu_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Asosiy menyu"""
+        """Asosiy menyu - har bir foydalanuvchi uchun alohida"""
         user = update.effective_user
-        db_user = await self.bot.user_service.get_user_by_telegram_id(user.id)
         
-        if not db_user:
+        # Foydalanuvchi sozlamalarini olish
+        user_role = await self.bot.user_service.get_user_role(user.id)
+        
+        if not user_role:
             await update.message.reply_text("❌ Avval ro'yxatdan o'ting! /register")
             return
         
-        role_text = "👨‍🏫 O'qituvchi" if db_user.role == UserRole.TEACHER else "👨‍🎓 O'quvchi"
+        role_text = "👨‍🏫 O'qituvchi" if user_role == UserRole.TEACHER else "👨‍🎓 O'quvchi"
+        dashboard_title = "O'qituvchi Dashboard" if user_role == UserRole.TEACHER else "O'quvchi Dashboard"
         
         menu_text = f"""
-🏠 Asosiy menyu
+🏠 {dashboard_title}
 
 👤 Foydalanuvchi: {user.first_name}
 🎭 Rol: {role_text}
+🆔 Telegram ID: {user.id}
 
 Quyidagi tugmalardan birini tanlang:
         """
         
-        reply_markup = KeyboardFactory.get_main_keyboard(db_user.role)
+        reply_markup = KeyboardFactory.get_main_keyboard(user_role)
         await update.message.reply_text(menu_text, reply_markup=reply_markup)
