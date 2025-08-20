@@ -62,7 +62,7 @@ class MessageHandlers:
         context.user_data['test_data'] = {}
     
     async def available_tests_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Mavjud testlar"""
+        """Mavjud testlar - qisqa ma'lumot bilan"""
         tests = await self.bot.test_service.get_available_tests()
         
         if not tests:
@@ -70,11 +70,10 @@ class MessageHandlers:
             return
         
         text = "📝 Mavjud testlar:\n\n"
-        for test in tests:
-            text += f"📋 {test.title}\n"
-            text += f"👨‍🏫 {test.teacher.first_name}\n"
-            text += f"⏱️ {test.time_limit} daqiqa\n"
-            text += f"📊 {test.passing_score}% o'tish balli\n\n"
+        for i, test in enumerate(tests, 1):
+            text += f"{i}. 📋 {test.title}\n"
+            text += f"   👨‍🏫 {test.teacher.first_name}\n"
+            text += f"   📊 {test.passing_score}% o'tish balli\n\n"
         
         reply_markup = KeyboardFactory.get_test_keyboard(tests)
         await update.message.reply_text(text, reply_markup=reply_markup)
@@ -96,10 +95,10 @@ class MessageHandlers:
             return
         
         text = "📋 Mening testlarim:\n\n"
-        for test in tests:
-            text += f"📝 {test.title}\n"
-            text += f"📊 Holat: {test.status.value}\n"
-            text += f"⏱️ {test.time_limit} daqiqa\n\n"
+        for i, test in enumerate(tests, 1):
+            text += f"{i}. 📝 {test.title}\n"
+            text += f"   📊 Holat: {test.status.value}\n"
+            text += f"   📂 Toifa: {test.category}\n\n"
         
         reply_markup = KeyboardFactory.get_test_keyboard(tests)
         await update.message.reply_text(text, reply_markup=reply_markup)
@@ -157,7 +156,7 @@ class MessageHandlers:
 🎭 Rol: {user_settings.role}
 🌐 Til: {user_settings.language}
 🎨 Tema: {user_settings.theme}
-🔔 Bildirishnomalar: {'✅ Yoqilgan' if user_settings.notifications else '❌ Ochrirlgan'}
+�� Bildirishnomalar: {'✅ Yoqilgan' if user_settings.notifications else '❌ Ochrirlgan'}
 
 📊 Test sozlamalari:
 📝 Default test turi: {user_settings.default_test_type}
@@ -170,7 +169,7 @@ class MessageHandlers:
             [KeyboardButton("🌐 Til o'zgartirish")],
             [KeyboardButton("🎨 Tema o'zgartirish")],
             [KeyboardButton("🔔 Bildirishnomalar")],
-            [KeyboardButton("�� Orqaga")]
+            [KeyboardButton("🔙 Orqaga")]
         ]
         reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
         
@@ -188,12 +187,8 @@ class MessageHandlers:
             await self._handle_test_category_selection(update, context, text)
         elif step == 'enter_title':
             await self._handle_test_title_entry(update, context, text, db_user)
-        elif step == 'enter_questions_count':
-            await self._handle_questions_count_entry(update, context, text, db_user)
-        elif step == 'enter_question':
-            await self._handle_question_entry(update, context, text, db_user)
-        elif step == 'enter_answers':
-            await self._handle_answers_entry(update, context, text, db_user)
+        elif step == 'enter_abcd_answers':
+            await self._handle_abcd_answers_entry(update, context, text, db_user)
     
     async def _handle_test_type_selection(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
         """Test turi tanlash"""
@@ -282,13 +277,24 @@ class MessageHandlers:
         
         await update.message.reply_text(
             f"📝 Test nomi: {text}\n\n"
-            f"Endi testdagi savollar sonini kiriting (1-50):",
+            f"Endi savollar va javoblarni ABCD formatida kiriting:\n\n"
+            f"📋 Formatlar:\n"
+            f"• abcdabcdabcd... (100 tagacha)\n"
+            f"• 1a2b3c4d5a... (raqamli format)\n\n"
+            f"📝 Misol:\n"
+            f"abcdabcdabcd\n"
+            f"yoki\n"
+            f"1a2b3c4d5a6b7c8d\n\n"
+            f"💡 A = 1-savol to'g'ri javobi\n"
+            f"💡 B = 2-savol to'g'ri javobi\n"
+            f"💡 C = 3-savol to'g'ri javobi\n"
+            f"💡 D = 4-savol to'g'ri javobi",
             reply_markup=KeyboardFactory.get_back_keyboard()
         )
-        context.user_data['test_creation_step'] = 'enter_questions_count'
+        context.user_data['test_creation_step'] = 'enter_abcd_answers'
     
-    async def _handle_questions_count_entry(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str, db_user):
-        """Savollar sonini kiritish"""
+    async def _handle_abcd_answers_entry(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str, db_user):
+        """ABCD formatida javoblarni kiritish"""
         if text == '🔙 Orqaga':
             await update.message.reply_text(
                 "📝 Endi test nomini kiriting:\n\n"
@@ -299,139 +305,39 @@ class MessageHandlers:
             return
         
         try:
-            questions_count = int(text)
-            if questions_count < 1 or questions_count > 50:
-                await update.message.reply_text(
-                    "❌ Savollar soni 1-50 oralig'ida bo'lishi kerak!",
-                    reply_markup=KeyboardFactory.get_back_keyboard()
-                )
-                return
+            # Test yaratish
+            test_data = context.user_data['test_data']
+            test = await self.bot.test_creation_service.create_simple_test(test_data, db_user.id)
             
-            context.user_data['test_data']['questions_count'] = questions_count
-            context.user_data['current_question'] = 1
+            # ABCD formatida savollar qo'shish
+            success = await self.bot.test_creation_service.create_test_with_abcd_answers(test.id, text)
             
-            await update.message.reply_text(
-                f"📝 Savollar soni: {questions_count}\n\n"
-                f"1-savolni kiriting:",
-                reply_markup=KeyboardFactory.get_back_keyboard()
-            )
-            context.user_data['test_creation_step'] = 'enter_question'
-            
-        except ValueError:
-            await update.message.reply_text(
-                "❌ Iltimos, raqam kiriting!",
-                reply_markup=KeyboardFactory.get_back_keyboard()
-            )
-    
-    async def _handle_question_entry(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str, db_user):
-        """Savolni kiritish"""
-        if text == '🔙 Orqaga':
-            questions_count = context.user_data['test_data']['questions_count']
-            await update.message.reply_text(
-                f"📝 Savollar soni: {questions_count}\n\n"
-                f"Endi testdagi savollar sonini kiriting (1-50):",
-                reply_markup=KeyboardFactory.get_back_keyboard()
-            )
-            context.user_data['test_creation_step'] = 'enter_questions_count'
-            return
-        
-        current_question = context.user_data['current_question']
-        context.user_data['current_question_text'] = text
-        
-        await update.message.reply_text(
-            f"📝 {current_question}-savol: {text}\n\n"
-            f"Endi javob variantlarini kiriting (A, B, C, D formatida):\n\n"
-            f"Misol:\n"
-            f"A) Birinchi javob\n"
-            f"B) Ikkinchi javob\n"
-            f"C) Uchinchi javob\n"
-            f"D) To'rtinchi javob\n\n"
-            f"To'g'ri javob: A",
-            reply_markup=KeyboardFactory.get_back_keyboard()
-        )
-        context.user_data['test_creation_step'] = 'enter_answers'
-    
-    async def _handle_answers_entry(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str, db_user):
-        """Javoblarni kiritish"""
-        if text == '🔙 Orqaga':
-            current_question = context.user_data['current_question']
-            await update.message.reply_text(
-                f"{current_question}-savolni kiriting:",
-                reply_markup=KeyboardFactory.get_back_keyboard()
-            )
-            context.user_data['test_creation_step'] = 'enter_question'
-            return
-        
-        try:
-            # Javoblarni parse qilish
-            lines = text.split('\n')
-            answers = []
-            correct_answer = None
-            
-            for line in lines:
-                line = line.strip()
-                if line.startswith(('A)', 'B)', 'C)', 'D)')):
-                    answer_text = line[2:].strip()
-                    answers.append(answer_text)
-                elif line.startswith('To\'g\'ri javob:'):
-                    correct = line.split(':')[1].strip().upper()
-                    if correct in ['A', 'B', 'C', 'D']:
-                        correct_answer = ord(correct) - ord('A')  # 0, 1, 2, 3
-            
-            if len(answers) != 4 or correct_answer is None:
-                await update.message.reply_text(
-                    "❌ Iltimos, 4 ta javob variantini va to'g'ri javobni kiriting!\n\n"
-                    f"Misol:\n"
-                    f"A) Birinchi javob\n"
-                    f"B) Ikkinchi javob\n"
-                    f"C) Uchinchi javob\n"
-                    f"D) To'rtinchi javob\n\n"
-                    f"To'g'ri javob: A",
-                    reply_markup=KeyboardFactory.get_back_keyboard()
-                )
-                return
-            
-            # Test yaratish (agar birinchi savol bo'lsa)
-            current_question = context.user_data['current_question']
-            if current_question == 1:
-                test_data = context.user_data['test_data']
-                test = await self.bot.test_creation_service.create_simple_test(test_data, db_user.id)
-                context.user_data['test_id'] = test.id
-            
-            # Savol va javoblarni qo'shish
-            test_id = context.user_data['test_id']
-            question_text = context.user_data['current_question_text']
-            
-            await self.bot.test_creation_service.add_question_to_test(
-                test_id, question_text, answers, correct_answer
-            )
-            
-            questions_count = context.user_data['test_data']['questions_count']
-            
-            if current_question < questions_count:
-                # Keyingi savol
-                context.user_data['current_question'] = current_question + 1
-                await update.message.reply_text(
-                    f"✅ {current_question}-savol qo'shildi!\n\n"
-                    f"{current_question + 1}-savolni kiriting:",
-                    reply_markup=KeyboardFactory.get_back_keyboard()
-                )
-                context.user_data['test_creation_step'] = 'enter_question'
-            else:
-                # Test tugadi
+            if success:
+                # Savollar sonini hisoblash
+                questions_count = len(text.replace('\n', '').replace(' ', ''))
+                
                 await update.message.reply_text(
                     f"✅ Test muvaffaqiyatli yaratildi!\n\n"
-                    f"📝 Nomi: {context.user_data['test_data']['title']}\n"
+                    f"📝 Nomi: {test.title}\n"
                     f"📊 Savollar soni: {questions_count}\n"
-                    f"📂 Toifasi: {context.user_data['test_data']['category']}\n\n"
-                    f"Test ID: {test_id}",
+                    f"📂 Toifa: {test.category}\n"
+                    f"🆔 Test ID: {test.id}\n\n"
+                    f"📋 Test \"Mening testlarim\" bo'limida ko'rinadi!",
                     reply_markup=KeyboardFactory.get_main_keyboard(UserRole.TEACHER)
                 )
                 
                 context.user_data['creating_test'] = False
                 context.user_data['test_creation_step'] = None
                 context.user_data['test_data'] = {}
+            else:
+                await update.message.reply_text(
+                    "❌ Test yaratishda xatolik yuz berdi!",
+                    reply_markup=KeyboardFactory.get_back_keyboard()
+                )
                 
         except Exception as e:
-            await update.message.reply_text(f"❌ Xatolik: {str(e)}")
-            context.user_data['creating_test'] = False
+            await update.message.reply_text(
+                f"❌ Xatolik: {str(e)}\n\n"
+                f"Iltimos, ABCD formatini to'g'ri kiriting!",
+                reply_markup=KeyboardFactory.get_back_keyboard()
+            )

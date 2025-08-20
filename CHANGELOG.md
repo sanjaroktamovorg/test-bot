@@ -1,5 +1,67 @@
 # Test Bot - Changelog
 
+## [v0.9.5] - 2025-08-20
+
+### ✅ Test yaratish jarayoni to'liq soddalashtirildi
+- **ABCD format** - Test nomidan keyin to'g'ridan-to'g'ri ABCD formatida javoblar
+- **Soddalashtirilgan jarayon** - Faqat test turi, toifa, nom va ABCD javoblar
+- **100 tagacha savol** - Bir vaqtda 100 tagacha savol kiritish mumkin
+- **Avtomatik test yaratish** - ABCD formatini parse qilib test yaratish
+
+### 🎯 Yangi funksiyalar
+- **ABCD format parsing** - abcdabcd... yoki 1a2b3c4d... formatlarini qo'llab-quvvatlash
+- **Qisqa ma'lumotlar** - Mavjud testlar bo'limida qisqa ma'lumotlar
+- **Ommaviy test yaratish** - Ommaviy testlar yaratish muammosi hal qilindi
+- **Enum xatoliklari** - TestStatus va TestType enum xatoliklari tuzatildi
+
+### 🔧 Texnik o'zgarishlar
+- **TestCreationService** yangilandi - ABCD format parsing qo'shildi
+- **Message handlers** yangilandi - soddalashtirilgan test yaratish
+- **Database enum** tuzatildi - .value qo'shildi
+- **Error handling** yaxshilandi - xatoliklar to'g'ri ko'rsatiladi
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- Test yaratish jarayoni ✅
+- Ommaviy testlar yaratiladi ✅
+- ABCD format to'g'ri ishlayapti ✅
+
+### 🎯 Afzalliklari
+- **Tezlik** - Test yaratish juda tez va oson
+- **Qulaylik** - ABCD format bilan test yaratish
+- **Aniqlik** - Qisqa va tushunarli ma'lumotlar
+- **Xavfsizlik** - Xatoliklar to'g'ri boshqariladi
+
+---
+
+## [v0.9.4] - 2025-08-20
+
+### ✅ Test yaratish jarayoni soddalashtirildi
+- **Soddalashtirilgan jarayon** - Faqat kerakli sozlamalar so'raladi
+- **Test nomi** - Test nomini kiritish
+- **Savollar soni** - Testdagi savollar sonini belgilash
+- **Savol va javoblar** - Har bir savol va javob variantlarini kiritish
+
+### 🎯 Yangi funksiyalar
+- **Test turi tanlash** - Oddiy test, DTM, Milliy sertifikat, Ochiq test
+- **Test toifasi** - Ommaviy va shaxsiy testlar
+- **Savollar qo'shish** - Testga savol va javoblar qo'shish
+- **Avtomatik test yaratish** - Barcha savollar kiritilgandan keyin
+
+### 🔧 Texnik o'zgarishlar
+- **TestCreationService** qayta yozildi
+- **Message handlers** yangilandi
+- **Multi-step conversation** soddalashtirildi
+- **Database modellar** to'g'rilandi
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- Test yaratish jarayoni ✅
+- Database to'g'ri ishlayapti ✅
+- Telegram API bilan bog'lanish ✅
+
+---
+
 ## [v0.9.3] - 2025-08-20
 
 ### ✅ Har bir foydalanuvchi uchun alohida sozlamalar
@@ -8,7 +70,7 @@
 - **Rol saqlash** - Har bir foydalanuvchi o'z roli bilan saqlanadi
 - **Sozlamalar saqlash** - Til, tema, bildirishnomalar va boshqa sozlamalar
 
-### 🎯 Yangi funksiyalar
+### �� Yangi funksiyalar
 - **Dashboard ko'rsatish** - Ro'yxatdan o'tgandan keyin to'g'ridan-to'g'ri dashboard
 - **Rol tanlash** - O'qituvchi yoki o'quvchi sifatida ro'yxatdan o'tish
 - **Sozlamalar paneli** - Foydalanuvchi sozlamalarini ko'rish va o'zgartirish
@@ -49,7 +111,7 @@
 - **Savollar qo'shish** - Testga savol va javoblar qo'shish
 - **Avtomatik test yaratish** - Barcha savollar kiritilgandan keyin
 
-### 🔧 Texnik o'zgarishlar
+### �� Texnik o'zgarishlar
 - **TestCreationService** qayta yozildi
 - **Message handlers** yangilandi
 - **Multi-step conversation** soddalashtirildi
@@ -192,7 +254,7 @@ src/bot/
 - **Database operatsiyalari** - CRUD operatsiyalari
 - **Logging** - Loguru bilan
 
-### 📊 Holat
+### �� Holat
 - Bot ishga tushdi ✅
 - Database ishlayapti ✅
 - Asosiy funksiyalar ✅
