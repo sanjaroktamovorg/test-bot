@@ -41,6 +41,8 @@ class CallbackHandlers:
             await self.public_tests_callback(update, context)
         elif data == "search_test":
             await self.search_test_callback(update, context)
+        elif data == "my_results":
+            await self.my_results_callback(update, context)
         else:
             await query.edit_message_text("❌ Noma'lum callback!")
     
@@ -358,4 +360,41 @@ Quyidagi tugmalardan birini tanlang:
         text = "📋 Mening testlarim:\n\nKerakli testni tanlang va batafsil ma'lumotlarni ko'ring:"
         reply_markup = KeyboardFactory.get_teacher_tests_keyboard(tests)
         
+        await query.edit_message_text(text, reply_markup=reply_markup)
+
+    async def my_results_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Mening natijalarim callback"""
+        query = update.callback_query
+        user = query.from_user
+        
+        # Foydalanuvchi roli tekshirish
+        user_role = await self.bot.user_service.get_user_role(user.id)
+        if user_role != UserRole.STUDENT:
+            await query.edit_message_text("❌ Bu funksiya faqat o'quvchilar uchun!")
+            return
+        
+        # Foydalanuvchi ma'lumotlarini olish
+        db_user = await self.bot.user_service.get_user_by_telegram_id(user.id)
+        if not db_user:
+            await query.edit_message_text("❌ Foydalanuvchi topilmadi!")
+            return
+        
+        # Natijalarni olish
+        results = await self.bot.test_service.get_student_results(db_user.id)
+        
+        if not results:
+            await query.edit_message_text("📊 Sizda hali test natijalari yo'q.")
+            return
+        
+        text = "📊 Mening natijalarim:\n\n"
+        for result in results:
+            # Test ma'lumotlarini alohida olish
+            test = await self.bot.test_service.get_test_by_id(result.test_id)
+            test_title = test.title if test else "Noma'lum test"
+            
+            text += f"📝 {test_title}\n"
+            text += f"📊 Ball: {result.score}/{result.max_score}\n"
+            text += f"📈 Foiz: {result.percentage:.1f}%\n\n"
+        
+        reply_markup = KeyboardFactory.get_results_keyboard(results)
         await query.edit_message_text(text, reply_markup=reply_markup)

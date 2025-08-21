@@ -27,9 +27,13 @@ class MessageHandlers:
         elif text == "👥 O'quvchilar":
             await update.message.reply_text("👥 O'quvchilar ro'yxati funksiyasi ishlab chiqilmoqda...")
         elif text == "📝 Mavjud testlar":
-            await self.available_tests_command(update, context)
+            await self.available_tests_menu_command(update, context)
         elif text == "📊 Mening natijalarim":
             await self.my_results_command(update, context)
+        elif text == "🌍 Ommaviy testlar":
+            await self.public_tests_command(update, context)
+        elif text == "🔍 Testni qidirish":
+            await self.search_test_command(update, context)
         elif text == "🏆 Reyting":
             await update.message.reply_text("🏆 O'quvchilar reytingi funksiyasi ishlab chiqilmoqda...")
         elif text == "📚 O'quv materiallari":
@@ -83,6 +87,75 @@ class MessageHandlers:
             text += f"   📊 {test.passing_score or 'Belgilanmagan'}% o'tish balli\n\n"
         
         reply_markup = KeyboardFactory.get_test_keyboard(tests)
+        await update.message.reply_text(text, reply_markup=reply_markup)
+    
+    async def available_tests_menu_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Mavjud testlar menyusi - ReplyKeyboardMarkup bilan"""
+        user = update.effective_user
+        user_role = await self.bot.user_service.get_user_role(user.id)
+        
+        if user_role != UserRole.STUDENT:
+            await update.message.reply_text("❌ Bu funksiya faqat o'quvchilar uchun!")
+            return
+        
+        text = "📝 Mavjud testlar:\n\nQaysi turdagi testlarni ko'rmoqchisiz?"
+        
+        keyboard = [
+            [KeyboardButton("🌍 Ommaviy testlar"), KeyboardButton("🔍 Testni qidirish")],
+            [KeyboardButton("🔙 Orqaga")]
+        ]
+        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=False)
+        
+        await update.message.reply_text(text, reply_markup=reply_markup)
+    
+    async def public_tests_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Ommaviy testlar - ReplyKeyboardMarkup bilan"""
+        user = update.effective_user
+        user_role = await self.bot.user_service.get_user_role(user.id)
+        
+        if user_role != UserRole.STUDENT:
+            await update.message.reply_text("❌ Bu funksiya faqat o'quvchilar uchun!")
+            return
+        
+        # Faqat ommaviy testlarni olish
+        tests = await self.bot.test_service.get_public_tests()
+        
+        if not tests:
+            await update.message.reply_text("📝 Hozircha ommaviy testlar mavjud emas.")
+            return
+        
+        text = "🌍 Ommaviy testlar:\n\n"
+        for i, test in enumerate(tests, 1):
+            # Teacher ma'lumotlarini alohida olish
+            teacher = await self.bot.user_service.get_user_by_id(test.teacher_id)
+            teacher_name = teacher.first_name if teacher else "Noma'lum"
+            
+            text += f"{i}. 📋 {test.title}\n"
+            text += f"   👨‍🏫 {teacher_name}\n"
+            text += f"   📊 {test.passing_score or 'Belgilanmagan'}% o'tish balli\n\n"
+        
+        reply_markup = KeyboardFactory.get_test_keyboard(tests)
+        await update.message.reply_text(text, reply_markup=reply_markup)
+    
+    async def search_test_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Test qidirish - ReplyKeyboardMarkup bilan"""
+        user = update.effective_user
+        user_role = await self.bot.user_service.get_user_role(user.id)
+        
+        if user_role != UserRole.STUDENT:
+            await update.message.reply_text("❌ Bu funksiya faqat o'quvchilar uchun!")
+            return
+        
+        # Test qidirish holatini context ga saqlash
+        context.user_data['searching_test'] = True
+        
+        text = "🔍 Test qidirish:\n\nIltimos, test kodini yoki nomini kiriting:"
+        
+        keyboard = [
+            [KeyboardButton("🔙 Orqaga")]
+        ]
+        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=False)
+        
         await update.message.reply_text(text, reply_markup=reply_markup)
     
     async def my_tests_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
