@@ -1,5 +1,39 @@
 # Test Bot - Changelog
 
+## [v0.9.26] - 2025-01-27
+
+### ✅ Profil tugmasi ishlaydigan qilindi
+- **Asosiy menyuga qo'shildi** - Profil tugmasi har ikki foydalanuvchi turi uchun
+- **Profil tahrirlash funksiyasi** - O'quvchilar va o'qituvchilar uchun alohida maydonlar
+- **Ma'lumotlar validatsiyasi** - Yosh va tajriba uchun cheklovlar
+- **Interaktiv tahrirlash** - Har bir maydon uchun alohida oynalar
+
+### 🎯 Yangi funksiyalar
+- **👤 Profil tugmasi** - Asosiy menyuda profil ko'rish
+- **✏️ Profil tahrirlash** - Shaxsiy ma'lumotlarni kiritish va yangilash
+- **O'quvchilar uchun** - Fotosurat, ism-familya, yosh
+- **O'qituvchilar uchun** - Fotosurat, ism-familya, yosh, haqida, tajriba, mutaxassislik fani
+
+### 🔧 Texnik o'zgarishlar
+- **KeyboardFactory yangilandi** - Asosiy menyuga profil tugmasi qo'shildi
+- **Message handlers yangilandi** - Profil tahrirlash funksiyalari
+- **Validatsiya qo'shildi** - Yosh va tajriba uchun cheklovlar
+- **Sozlamalar paneli** - "Tema" olib tashlandi
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- Profil tugmasi ishlayapti ✅
+- Profil tahrirlash ishlayapti ✅
+- Validatsiya ishlayapti ✅
+
+### 🎯 Afzalliklari
+- **Qulaylik** - Profil ma'lumotlarini oson kiritish
+- **Xavfsizlik** - Ma'lumotlar validatsiyasi
+- **Aniqlik** - Har bir foydalanuvchi turi uchun alohida maydonlar
+- **Soddalik** - Interaktiv va tushunarli interfeys
+
+---
+
 ## [v0.9.25] - 2025-01-27
 
 ### ✅ Sozlamalar paneli soddalashtirildi

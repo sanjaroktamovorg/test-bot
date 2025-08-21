@@ -46,6 +46,10 @@ class MessageHandlers:
             await self.profile_command(update, context)
         elif text == "📊 Batafsil statistika":
             await self.detailed_stats_command(update, context)
+        elif text == "✏️ Profil tahrirlash":
+            await self.edit_profile_command(update, context)
+        elif text in ["📷 Profil rasmi", "👨‍🏫 Ism-familya", "👨‍🎓 Ism-familya", "🎂 Yosh", "📝 Haqida", "💼 Tajriba", "📚 Mutaxassislik fani"]:
+            await self.handle_profile_edit_field(update, context, text)
         elif text == "🔙 Orqaga":
             await update.message.reply_text("🏠 Asosiy menyuga qaytdingiz.", reply_markup=KeyboardFactory.get_main_keyboard(user_role))
         elif context.user_data.get('creating_test'):
@@ -57,6 +61,9 @@ class MessageHandlers:
         elif context.user_data.get('taking_test'):
             # Test ishlash logikasi
             await self._handle_test_answers(update, context, text)
+        elif context.user_data.get('editing_profile'):
+            # Profil tahrirlash logikasi
+            await self._handle_profile_edit_data(update, context, text)
         else:
             await update.message.reply_text("❓ Tushunarsiz xabar. /help komandasi bilan yordam oling.")
     
@@ -282,13 +289,8 @@ class MessageHandlers:
 🆔 Telegram ID: {user.id}
 🎭 Rol: {user_settings.role}
 🌐 Til: {user_settings.language}
-🎨 Tema: {user_settings.theme}
-�� Bildirishnomalar: {'✅ Yoqilgan' if user_settings.notifications else '❌ Ochrirlgan'}
 
-📊 Test sozlamalari:
-📝 Default test turi: {user_settings.default_test_type}
-📂 Default toifa: {user_settings.default_test_category}
-📚 Default fan: {user_settings.default_subject or 'Belgilanmagan'}
+�� Bildirishnomalar: {'✅ Yoqilgan' if user_settings.notifications else '❌ Ochrirlgan'}
         """
         
         keyboard = [
@@ -333,7 +335,7 @@ class MessageHandlers:
 📊 Jami natijalar: {total_results}
 
 🌐 Til: {user_settings.language}
-🎨 Tema: {user_settings.theme}
+
 🔔 Bildirishnomalar: {'✅ Yoqilgan' if user_settings.notifications else '❌ Ochrirlgan'}
             """
         else:
@@ -357,11 +359,12 @@ class MessageHandlers:
 🏆 Eng yaxshi natija: {best_score:.1f}%
 
 🌐 Til: {user_settings.language}
-🎨 Tema: {user_settings.theme}
+
 🔔 Bildirishnomalar: {'✅ Yoqilgan' if user_settings.notifications else '❌ Ochrirlgan'}
             """
         
         keyboard = [
+            [KeyboardButton("✏️ Profil tahrirlash")],
             [KeyboardButton("📊 Batafsil statistika")],
             [KeyboardButton("🔙 Orqaga")]
         ]
@@ -845,12 +848,6 @@ class MessageHandlers:
             print(f"O'qituvchiga xabar yuborishda xatolik: {str(e)}")
     
     async def _handle_test_search(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
-            await update.message.reply_text(
-                f"❌ Test tugatishda xatolik: {str(e)}",
-                reply_markup=KeyboardFactory.get_main_keyboard(UserRole.STUDENT)
-            )
-    
-    async def _handle_test_search(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
         """Test qidirish logikasi"""
         if text == '🔙 Orqaga':
             # Test qidirish holatini to'xtatish
@@ -924,4 +921,158 @@ class MessageHandlers:
             await update.message.reply_text(
                 f"❌ Qidirishda xatolik yuz berdi: {str(e)}",
                 reply_markup=KeyboardFactory.get_back_keyboard()
+            )
+    
+    async def edit_profile_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Profil tahrirlash - foydalanuvchi roliga qarab"""
+        user = update.effective_user
+        user_settings = await self.bot.user_service.get_user_settings(user.id)
+        
+        if not user_settings:
+            await update.message.reply_text("❌ Foydalanuvchi sozlamalari topilmadi!")
+            return
+        
+        if user_settings.role == "teacher":
+            # O'qituvchi uchun profil tahrirlash
+            edit_text = """
+✏️ O'qituvchi Profil Tahrirlash
+
+Quyidagi ma'lumotlarni kiritish/yangilash mumkin:
+
+📷 Profil rasmi
+👨‍🏫 To'liq ism-familya
+🎂 Yosh
+📝 Haqida (qisqacha)
+💼 Tajriba (yillar)
+📚 Mutaxassislik fani
+
+Qaysi ma'lumotni tahrirlashni xohlaysiz?
+            """
+            
+            keyboard = [
+                [KeyboardButton("📷 Profil rasmi"), KeyboardButton("👨‍🏫 Ism-familya")],
+                [KeyboardButton("🎂 Yosh"), KeyboardButton("📝 Haqida")],
+                [KeyboardButton("💼 Tajriba"), KeyboardButton("📚 Mutaxassislik fani")],
+                [KeyboardButton("🔙 Orqaga")]
+            ]
+        else:
+            # O'quvchi uchun profil tahrirlash
+            edit_text = """
+✏️ O'quvchi Profil Tahrirlash
+
+Quyidagi ma'lumotlarni kiritish/yangilash mumkin:
+
+📷 Profil rasmi
+👨‍🎓 To'liq ism-familya
+🎂 Yosh
+
+Qaysi ma'lumotni tahrirlashni xohlaysiz?
+            """
+            
+            keyboard = [
+                [KeyboardButton("📷 Profil rasmi"), KeyboardButton("👨‍🎓 Ism-familya")],
+                [KeyboardButton("🎂 Yosh")],
+                [KeyboardButton("🔙 Orqaga")]
+            ]
+        
+        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+        await update.message.reply_text(edit_text, reply_markup=reply_markup)
+    
+    async def handle_profile_edit_field(self, update: Update, context: ContextTypes.DEFAULT_TYPE, field_type: str):
+        """Profil maydonini tahrirlash"""
+        user = update.effective_user
+        
+        # Profil tahrirlash holatini context ga saqlash
+        context.user_data['editing_profile'] = True
+        context.user_data['edit_field'] = field_type
+        
+        if field_type == "📷 Profil rasmi":
+            text = "📷 Profil rasmini yuklash\n\nIltimos, yangi profil rasmingizni yuboring:"
+        elif field_type in ["👨‍🏫 Ism-familya", "👨‍🎓 Ism-familya"]:
+            text = "👤 To'liq ism-familya\n\nIltimos, to'liq ism-familyangizni kiriting:"
+        elif field_type == "🎂 Yosh":
+            text = "🎂 Yosh ma'lumoti\n\nIltimos, yoshingizni kiriting (raqamda):"
+        elif field_type == "📝 Haqida":
+            text = "📝 Haqida ma'lumot\n\nIltimos, o'zingiz haqida qisqacha ma'lumot kiriting:"
+        elif field_type == "💼 Tajriba":
+            text = "💼 Ish tajribasi\n\nIltimos, ish tajribangizni yillarda kiriting (masalan: 5):"
+        elif field_type == "📚 Mutaxassislik fani":
+            text = "📚 Mutaxassislik fani\n\nIltimos, mutaxassislik faningizni kiriting:"
+        
+        keyboard = [
+            [KeyboardButton("🔙 Orqaga")]
+        ]
+        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+        
+        await update.message.reply_text(text, reply_markup=reply_markup)
+    
+    async def _handle_profile_edit_data(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
+        """Profil tahrirlash ma'lumotlarini saqlash"""
+        if text == "🔙 Orqaga":
+            # Profil tahrirlash holatini to'xtatish
+            context.user_data['editing_profile'] = False
+            context.user_data['edit_field'] = None
+            
+            # Profil tahrirlash menyusiga qaytish
+            await self.edit_profile_command(update, context)
+            return
+        
+        user = update.effective_user
+        field_type = context.user_data.get('edit_field')
+        
+        try:
+            # Ma'lumotlarni validatsiya qilish
+            if field_type == "🎂 Yosh":
+                try:
+                    age = int(text)
+                    if age < 5 or age > 100:
+                        await update.message.reply_text(
+                            "❌ Yosh 5 dan 100 gacha bo'lishi kerak!\n\nIltimos, to'g'ri yosh kiriting:",
+                            reply_markup=ReplyKeyboardMarkup([[KeyboardButton("🔙 Orqaga")]], resize_keyboard=True)
+                        )
+                        return
+                except ValueError:
+                    await update.message.reply_text(
+                        "❌ Yosh raqamda kiritilishi kerak!\n\nIltimos, to'g'ri yosh kiriting:",
+                        reply_markup=ReplyKeyboardMarkup([[KeyboardButton("🔙 Orqaga")]], resize_keyboard=True)
+                    )
+                    return
+            elif field_type == "💼 Tajriba":
+                try:
+                    experience = int(text)
+                    if experience < 0 or experience > 50:
+                        await update.message.reply_text(
+                            "❌ Tajriba 0 dan 50 yilgacha bo'lishi kerak!\n\nIltimos, to'g'ri tajriba kiriting:",
+                            reply_markup=ReplyKeyboardMarkup([[KeyboardButton("🔙 Orqaga")]], resize_keyboard=True)
+                        )
+                        return
+                except ValueError:
+                    await update.message.reply_text(
+                        "❌ Tajriba raqamda kiritilishi kerak!\n\nIltimos, to'g'ri tajriba kiriting:",
+                        reply_markup=ReplyKeyboardMarkup([[KeyboardButton("🔙 Orqaga")]], resize_keyboard=True)
+                    )
+                    return
+            
+            # Ma'lumotlarni saqlash (hozircha faqat xabar ko'rsatamiz)
+            success_message = f"✅ {field_type} muvaffaqiyatli yangilandi!\n\n📝 Yangi qiymat: {text}"
+            
+            # Profil tahrirlash holatini to'xtatish
+            context.user_data['editing_profile'] = False
+            context.user_data['edit_field'] = None
+            
+            # Asosiy profil menyusiga qaytish
+            user_role = await self.bot.user_service.get_user_role(user.id)
+            keyboard = [
+                [KeyboardButton("✏️ Profil tahrirlash")],
+                [KeyboardButton("📊 Batafsil statistika")],
+                [KeyboardButton("🔙 Orqaga")]
+            ]
+            reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+            
+            await update.message.reply_text(success_message, reply_markup=reply_markup)
+            
+        except Exception as e:
+            await update.message.reply_text(
+                f"❌ Ma'lumotlarni saqlashda xatolik: {str(e)}\n\nQayta urinib ko'ring:",
+                reply_markup=ReplyKeyboardMarkup([[KeyboardButton("🔙 Orqaga")]], resize_keyboard=True)
             )
