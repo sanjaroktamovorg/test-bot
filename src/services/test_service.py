@@ -151,6 +151,14 @@ class TestService:
         finally:
             self.db.close_session(session)
     
+    async def get_test_results(self, test_id: int) -> list[TestResult]:
+        """Test natijalarini olish"""
+        session = self.db.get_session()
+        try:
+            return session.query(TestResult).filter(TestResult.test_id == test_id).all()
+        finally:
+            self.db.close_session(session)
+    
     async def get_test_questions(self, test_id: int) -> list[Question]:
         """Testning savollarini olish"""
         session = self.db.get_session()

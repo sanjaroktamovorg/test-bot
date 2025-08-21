@@ -2,6 +2,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from src.models import UserRole
 from src.bot.keyboards import KeyboardFactory
+import time
 
 class CallbackHandlers:
     """Callback handerlari"""
@@ -45,8 +46,224 @@ class CallbackHandlers:
         elif data.startswith("start_test_"):
             test_id = int(data.split("_")[2])
             await self.start_test_callback(update, context, test_id)
+        elif data.startswith("teacher_results_"):
+            test_id = int(data.split("_")[2])
+            await self.teacher_results_callback(update, context, test_id)
         else:
             await query.edit_message_text("❌ Noma'lum callback!")
+    
+    async def teacher_results_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE, test_id: int):
+        """O'qituvchi uchun test natijalarini ko'rish"""
+        query = update.callback_query
+        
+        try:
+            # Testni topish
+            test = await self.bot.test_service.get_test_by_id(test_id)
+            if not test:
+                await query.edit_message_text("❌ Test topilmadi!")
+                return
+            
+            # Test natijalarini olish
+            results = await self.bot.test_service.get_test_results(test_id)
+            if not results:
+                await query.edit_message_text("📊 Bu test uchun hali natijalar yo'q!")
+                return
+            
+            # Natijalar jadvalini yaratish
+            table_text = await self._create_results_table(test, results)
+            
+            # PDF yaratish
+            pdf_path = await self._create_results_pdf(test, results)
+            
+            # Natijalarni yuborish
+            await query.edit_message_text(
+                f"📊 {test.title} testi natijalari:\n\n{table_text}",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("📄 PDF yuklab olish", callback_data=f"download_pdf_{test_id}")],
+                    [InlineKeyboardButton("🔙 Orqaga", callback_data="my_tests")]
+                ])
+            )
+            
+            # PDF faylni yuborish
+            if pdf_path:
+                with open(pdf_path, 'rb') as pdf_file:
+                    await context.bot.send_document(
+                        chat_id=query.from_user.id,
+                        document=pdf_file,
+                        filename=f"{test.title}_natijalari.pdf"
+                    )
+            
+        except Exception as e:
+            await query.edit_message_text(f"❌ Natijalarni ko'rishda xatolik: {str(e)}")
+    
+    async def _create_results_table(self, test, results):
+        """Natijalar jadvalini yaratish"""
+        try:
+            # Jadval sarlavhasi
+            table = f"📊 {test.title} testi natijalari\n\n"
+            table += "🏆 Reyting | 👤 Ism Familiya | "
+            
+            # Savollar sonini aniqlash
+            questions = await self.bot.test_service.get_test_questions(test.id)
+            for i in range(len(questions)):
+                table += f"{i+1} | "
+            table += "T.J.S\n"
+            table += "─" * 50 + "\n"
+            
+            # Natijalarni saralash (reyting bo'yicha)
+            sorted_results = sorted(results, key=lambda x: x.score, reverse=True)
+            
+            for rank, result in enumerate(sorted_results, 1):
+                # O'quvchi ma'lumotlari
+                student = await self.bot.user_service.get_user_by_id(result.student_id)
+                student_name = f"{student.first_name} {student.last_name or ''}".strip()
+                if not student_name:
+                    student_name = student.username or "Noma'lum"
+                
+                # Natija qatorini yaratish
+                row = f"{rank:2d} | {student_name:15s} | "
+                
+                # Har bir savol uchun natija
+                answers_data = result.answers_data.get('answers', [])
+                correct_count = 0
+                
+                for i, question in enumerate(questions):
+                    if i < len(answers_data):
+                        user_answer = answers_data[i]['correct_answer']
+                        # To'g'ri javobni aniqlash
+                        question_answers = await self.bot.test_service.get_question_answers(question.id)
+                        correct_answer = None
+                        for answer in question_answers:
+                            if answer.is_correct:
+                                correct_answer = answer.answer_text.replace('Variant ', '').strip()
+                                break
+                        
+                        # Natijani belgilash
+                        if user_answer.upper() == correct_answer.upper():
+                            row += "1 | "
+                            correct_count += 1
+                        else:
+                            row += "0 | "
+                    else:
+                        row += "- | "
+                
+                # To'g'ri javoblar soni
+                row += f"{correct_count}\n"
+                table += row
+            
+            return table
+            
+        except Exception as e:
+            return f"❌ Jadval yaratishda xatolik: {str(e)}"
+    
+    async def _create_results_pdf(self, test, results):
+        """Natijalar PDF faylini yaratish"""
+        try:
+            # PDF yaratish uchun reportlab ishlatamiz
+            from reportlab.lib.pagesizes import letter, A4
+            from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
+            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+            from reportlab.lib.units import inch
+            from reportlab.lib import colors
+            import os
+            
+            # PDF fayl nomi
+            pdf_filename = f"test_results_{test.id}_{int(time.time())}.pdf"
+            pdf_path = f"/tmp/{pdf_filename}"
+            
+            # PDF hujjatini yaratish
+            doc = SimpleDocTemplate(pdf_path, pagesize=A4)
+            elements = []
+            
+            # Sarlavha
+            styles = getSampleStyleSheet()
+            title_style = ParagraphStyle(
+                'CustomTitle',
+                parent=styles['Heading1'],
+                fontSize=16,
+                spaceAfter=30,
+                alignment=1  # Markazga tekislash
+            )
+            
+            title = Paragraph(f"{test.title} testi natijalari", title_style)
+            elements.append(title)
+            
+            # Jadval ma'lumotlari
+            questions = await self.bot.test_service.get_test_questions(test.id)
+            
+            # Jadval sarlavhasi
+            headers = ['Reyting', 'Ism Familiya']
+            for i in range(len(questions)):
+                headers.append(str(i+1))
+            headers.append('T.J.S')
+            
+            table_data = [headers]
+            
+            # Natijalarni saralash
+            sorted_results = sorted(results, key=lambda x: x.score, reverse=True)
+            
+            for rank, result in enumerate(sorted_results, 1):
+                # O'quvchi ma'lumotlari
+                student = await self.bot.user_service.get_user_by_id(result.student_id)
+                student_name = f"{student.first_name} {student.last_name or ''}".strip()
+                if not student_name:
+                    student_name = student.username or "Noma'lum"
+                
+                # Natija qatori
+                row = [str(rank), student_name]
+                
+                # Har bir savol uchun natija
+                answers_data = result.answers_data.get('answers', [])
+                correct_count = 0
+                
+                for i, question in enumerate(questions):
+                    if i < len(answers_data):
+                        user_answer = answers_data[i]['correct_answer']
+                        # To'g'ri javobni aniqlash
+                        question_answers = await self.bot.test_service.get_question_answers(question.id)
+                        correct_answer = None
+                        for answer in question_answers:
+                            if answer.is_correct:
+                                correct_answer = answer.answer_text.replace('Variant ', '').strip()
+                                break
+                        
+                        # Natijani belgilash
+                        if user_answer.upper() == correct_answer.upper():
+                            row.append('1')
+                            correct_count += 1
+                        else:
+                            row.append('0')
+                    else:
+                        row.append('-')
+                
+                # To'g'ri javoblar soni
+                row.append(str(correct_count))
+                table_data.append(row)
+            
+            # Jadvalni yaratish
+            table = Table(table_data)
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 12),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('FONTSIZE', (0, 1), (-1, -1), 10),
+            ]))
+            
+            elements.append(table)
+            
+            # PDF yaratish
+            doc.build(elements)
+            
+            return pdf_path
+            
+        except Exception as e:
+            print(f"PDF yaratishda xatolik: {str(e)}")
+            return None
     
     async def register_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Ro'yxatdan o'tish callback"""

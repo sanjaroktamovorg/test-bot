@@ -563,6 +563,9 @@ class MessageHandlers:
                 answers_data={'answers': answers}
             )
             
+            # O'qituvchiga xabar yuborish
+            await self._notify_teacher_about_result(update, context, test, db_user, correct_answers, questions_count, answers)
+            
             # Test ishlash holatini to'xtatish
             context.user_data['taking_test'] = False
             context.user_data['current_test'] = {}
@@ -596,6 +599,57 @@ class MessageHandlers:
             await update.message.reply_text(result_message, reply_markup=reply_markup)
             
         except Exception as e:
+            await update.message.reply_text(
+                f"❌ Test tugatishda xatolik: {str(e)}",
+                reply_markup=KeyboardFactory.get_main_keyboard(UserRole.STUDENT)
+            )
+    
+    async def _notify_teacher_about_result(self, update: Update, context: ContextTypes.DEFAULT_TYPE, test, student, correct_answers, questions_count, answers):
+        """O'qituvchiga o'quvchi natijasi haqida xabar yuborish"""
+        try:
+            # O'qituvchini topish
+            teacher = await self.bot.user_service.get_user_by_id(test.teacher_id)
+            if not teacher:
+                return
+            
+            # O'quvchi ma'lumotlari
+            student_name = f"{student.first_name} {student.last_name or ''}".strip()
+            if not student_name:
+                student_name = student.username or "Noma'lum o'quvchi"
+            
+            # Natija xabarini tayyorlash
+            percentage = (correct_answers / questions_count) * 100 if questions_count > 0 else 0
+            
+            notification_message = f"""
+📊 Yangi test natijasi!
+
+👨‍🎓 O'quvchi: {student_name}
+📝 Test: {test.title}
+✅ To'g'ri javoblar: {correct_answers}/{questions_count}
+📊 Foiz: {percentage:.1f}%
+🎯 Natija: {'✅ O\'tdi' if percentage >= (test.passing_score or 0) else '❌ O\'tmadi'}
+
+📈 Batafsil natijalarni ko'rish uchun "📊 Natijalar" tugmasini bosing!
+            """
+            
+            # O'qituvchi uchun keyboard
+            keyboard = [
+                [InlineKeyboardButton("📊 Natijalar", callback_data=f"teacher_results_{test.id}")],
+                [InlineKeyboardButton("📋 Barcha testlarim", callback_data="my_tests")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            # O'qituvchiga xabar yuborish
+            await context.bot.send_message(
+                chat_id=teacher.telegram_id,
+                text=notification_message,
+                reply_markup=reply_markup
+            )
+            
+        except Exception as e:
+            print(f"O'qituvchiga xabar yuborishda xatolik: {str(e)}")
+    
+    async def _handle_test_search(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
             await update.message.reply_text(
                 f"❌ Test tugatishda xatolik: {str(e)}",
                 reply_markup=KeyboardFactory.get_main_keyboard(UserRole.STUDENT)
