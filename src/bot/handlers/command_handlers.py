@@ -120,11 +120,14 @@ Quyidagi tugmalardan birini tanlang:
         version_text = """
 🤖 Test Bot - Versiya ma'lumotlari
 
-📋 Versiya: v0.9.55
+📋 Versiya: v1.0.0
 📅 Yangilangan: 2025-01-27
 👨‍💻 Developer: Test Bot Team
 
-🆕 So'nggi o'zgarishlar:
+🎉 BIRINCHI STABLE VERSIYA!
+
+🆕 Asosiy funksiyalar:
+• ✏️ Testni tahrirlash - O'qituvchilar testlarini tahrirlaydi
 • 🎯 Test yaratishda inline buttonlar bilan javob belgilash
 • 📝 Test yaratishda savollar sonini kiritish
 • 🔄 Test yaratish va test ishlash bir xil interfeys
@@ -145,14 +148,22 @@ Quyidagi tugmalardan birini tanlang:
 • ✏️ Matn usuli ham mavjud (ABCD formatida)
 • 🔄 Ikkala usul o'rtasida almashish
 
+✏️ Test tahrirlash funksiyalari:
+• 📝 Test nomi, tavsif, fan tahrirlash
+• ⏱️ Vaqt chegarasi va o'tish ballini o'zgartirish
+• 📋 Savollar va javoblarni tahrirlash
+• 🗑️ Savollar va javoblarni o'chirish
+• 🔒 Faqat o'qituvchi o'z testlarini tahrirlaydi
+
 🔧 Texnik ma'lumotlar:
 • Python 3.10+
 • python-telegram-bot 20.7
 • SQLAlchemy 2.0.23
 • SQLite Database
+• Systemd Service
 
 📞 Yordam uchun: /help
 
-💡 Izoh: Endi test yaratish va test ishlash bir xil interfeys bilan ishlaydi. Inline buttonlar orqali A, B, C, D variantlarini tanlash mumkin!
+💡 Izoh: v1.0.0 - Birinchi stable versiya! Test yaratish, tahrirlash va ishlash to'liq funksiyali!
         """
         await update.message.reply_text(version_text)

@@ -72,11 +72,13 @@ class KeyboardFactory:
         """O'qituvchi testlari uchun inline keyboard"""
         keyboard = []
         for test in tests:
-            keyboard.append([InlineKeyboardButton(
-                f"📝 {test.title}", 
-                callback_data=f"view_teacher_test_{test.id}"
-            )])
+            # Har bir test uchun 2 ta tugma: ko'rish va tahrirlash
+            keyboard.append([
+                InlineKeyboardButton(f"📝 {test.title}", callback_data=f"view_teacher_test_{test.id}"),
+                InlineKeyboardButton("✏️ Tahrirlash", callback_data=f"edit_test_{test.id}")
+            ])
         
+        keyboard.append([InlineKeyboardButton("🔙 Orqaga", callback_data="back_to_menu")])
         return InlineKeyboardMarkup(keyboard)
     
     @staticmethod

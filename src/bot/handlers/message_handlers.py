@@ -96,6 +96,9 @@ class MessageHandlers:
         elif context.user_data.get('editing_profile'):
             # Profil tahrirlash logikasi
             await self._handle_profile_edit_data(update, context, text)
+        elif context.user_data.get('editing_test'):
+            # Test tahrirlash logikasi
+            await self._handle_test_editing(update, context, text)
         else:
             await update.message.reply_text("❓ Tushunarsiz xabar. /help komandasi bilan yordam oling.")
     
@@ -1563,3 +1566,281 @@ Qaysi ma'lumotni tahrirlashni xohlaysiz?
                 f"❌ Qidirishda xatolik: {str(e)}",
                 reply_markup=KeyboardFactory.get_back_keyboard(user_role)
             )
+    
+    # Test tahrirlash funksiyalari
+    async def edit_test_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Testni tahrirlash komandasi"""
+        user = update.effective_user
+        user_role = await self.bot.user_service.get_user_role(user.id)
+        
+        # Faqat o'qituvchilar testni tahrirlaydi
+        if user_role != UserRole.TEACHER:
+            await update.message.reply_text(
+                "❌ Testni tahrirlash faqat o'qituvchilar uchun mavjud!",
+                reply_markup=KeyboardFactory.get_main_keyboard(user_role)
+            )
+            return
+        
+        # O'qituvchining testlarini olish
+        teacher_tests = await self.bot.test_service.get_teacher_tests(user.id)
+        
+        if not teacher_tests:
+            await update.message.reply_text(
+                "❌ Sizda tahrirlash uchun testlar mavjud emas!\n\n"
+                "📝 Avval test yarating: /create_test",
+                reply_markup=KeyboardFactory.get_main_keyboard(user_role)
+            )
+            return
+        
+        # Testlar ro'yxatini ko'rsatish
+        tests_text = "✏️ Tahrirlash uchun testni tanlang:\n\n"
+        
+        keyboard = []
+        for test in teacher_tests:
+            status_emoji = "✅" if test.status == "active" else "📝"
+            tests_text += f"{status_emoji} {test.title}\n"
+            keyboard.append([InlineKeyboardButton(f"✏️ {test.title[:30]}...", callback_data=f"edit_test_{test.id}")])
+        
+        keyboard.append([InlineKeyboardButton("🔙 Orqaga", callback_data="main_menu")])
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await update.message.reply_text(tests_text, reply_markup=reply_markup)
+    
+    async def _handle_test_editing(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
+        """Test tahrirlash jarayonini boshqarish"""
+        editing_step = context.user_data.get('editing_step')
+        
+        if editing_step == 'select_field':
+            await self._handle_edit_field_selection(update, context, text)
+        elif editing_step == 'edit_title':
+            await self._handle_title_edit(update, context, text)
+        elif editing_step == 'edit_description':
+            await self._handle_description_edit(update, context, text)
+        elif editing_step == 'edit_subject':
+            await self._handle_subject_edit(update, context, text)
+        elif editing_step == 'edit_time_limit':
+            await self._handle_time_limit_edit(update, context, text)
+        elif editing_step == 'edit_passing_score':
+            await self._handle_passing_score_edit(update, context, text)
+        elif editing_step == 'edit_question':
+            await self._handle_question_edit(update, context, text)
+        elif editing_step == 'edit_answer':
+            await self._handle_answer_edit(update, context, text)
+        else:
+            await update.message.reply_text("❌ Tahrirlash jarayonida xatolik!")
+    
+    async def _handle_edit_field_selection(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
+        """Tahrirlash maydonini tanlash"""
+        if text == "🔙 Orqaga":
+            await self.edit_test_command(update, context)
+            return
+        
+        test_id = context.user_data.get('editing_test_id')
+        
+        # Foydalanuvchi ma'lumotlarini olish
+        db_user = await self.bot.user_service.get_user_by_telegram_id(update.effective_user.id)
+        if not db_user:
+            await update.message.reply_text("❌ Foydalanuvchi topilmadi!")
+            return
+        
+        test_data = await self.bot.test_service.get_test_for_editing(test_id, db_user.id)
+        
+        if not test_data:
+            await update.message.reply_text("❌ Test topilmadi!")
+            return
+        
+        # Tahrirlash maydonlarini ko'rsatish
+        keyboard = [
+            [KeyboardButton("📝 Test nomi")],
+            [KeyboardButton("📄 Tavsif")],
+            [KeyboardButton("📚 Fan")],
+            [KeyboardButton("⏱️ Vaqt chegarasi")],
+            [KeyboardButton("🎯 O'tish balli")],
+            [KeyboardButton("📋 Savollar")],
+            [KeyboardButton("🔙 Orqaga")]
+        ]
+        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+        
+        test_info = f"""
+✏️ Test tahrirlash: {test_data['title']}
+
+📝 Nomi: {test_data['title']}
+📄 Tavsif: {test_data['description'] or "Tavsif yo'q"}
+📚 Fan: {test_data['subject'] or "Fan yo'q"}
+⏱️ Vaqt chegarasi: {test_data['time_limit'] or "Cheklanmagan"} daqiqa
+🎯 O'tish balli: {test_data['passing_score'] or "Aniqlanmagan"}%
+📋 Savollar soni: {len(test_data['questions'])} ta
+
+Qaysi maydonni tahrirlashni xohlaysiz?
+        """
+        
+        await update.message.reply_text(test_info, reply_markup=reply_markup)
+    
+    async def _handle_title_edit(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
+        """Test nomini tahrirlash"""
+        if text == "🔙 Orqaga":
+            await self._handle_edit_field_selection(update, context, text)
+            return
+        
+        test_id = context.user_data.get('editing_test_id')
+        
+        # Foydalanuvchi ma'lumotlarini olish
+        db_user = await self.bot.user_service.get_user_by_telegram_id(update.effective_user.id)
+        if not db_user:
+            await update.message.reply_text("❌ Foydalanuvchi topilmadi!")
+            return
+        
+        try:
+            success = await self.bot.test_service.update_test_basic_info(
+                test_id, db_user.id, title=text
+            )
+            
+            if success:
+                await update.message.reply_text(
+                    f"✅ Test nomi muvaffaqiyatli yangilandi: {text}",
+                    reply_markup=KeyboardFactory.get_back_keyboard(UserRole.TEACHER)
+                )
+                context.user_data['editing_test'] = False
+                context.user_data['editing_step'] = None
+            else:
+                await update.message.reply_text("❌ Test nomini yangilashda xatolik!")
+        except Exception as e:
+            await update.message.reply_text(f"❌ Xatolik: {str(e)}")
+    
+    async def _handle_description_edit(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
+        """Test tavsifini tahrirlash"""
+        if text == "🔙 Orqaga":
+            await self._handle_edit_field_selection(update, context, text)
+            return
+        
+        test_id = context.user_data.get('editing_test_id')
+        
+        # Foydalanuvchi ma'lumotlarini olish
+        db_user = await self.bot.user_service.get_user_by_telegram_id(update.effective_user.id)
+        if not db_user:
+            await update.message.reply_text("❌ Foydalanuvchi topilmadi!")
+            return
+        
+        try:
+            success = await self.bot.test_service.update_test_basic_info(
+                test_id, db_user.id, description=text
+            )
+            
+            if success:
+                await update.message.reply_text(
+                    f"✅ Test tavsifi muvaffaqiyatli yangilandi!",
+                    reply_markup=KeyboardFactory.get_back_keyboard(UserRole.TEACHER)
+                )
+                context.user_data['editing_test'] = False
+                context.user_data['editing_step'] = None
+            else:
+                await update.message.reply_text("❌ Test tavsifini yangilashda xatolik!")
+        except Exception as e:
+            await update.message.reply_text(f"❌ Xatolik: {str(e)}")
+    
+    async def _handle_subject_edit(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
+        """Test fanini tahrirlash"""
+        if text == "🔙 Orqaga":
+            await self._handle_edit_field_selection(update, context, text)
+            return
+        
+        test_id = context.user_data.get('editing_test_id')
+        
+        # Foydalanuvchi ma'lumotlarini olish
+        db_user = await self.bot.user_service.get_user_by_telegram_id(update.effective_user.id)
+        if not db_user:
+            await update.message.reply_text("❌ Foydalanuvchi topilmadi!")
+            return
+        
+        try:
+            success = await self.bot.test_service.update_test_basic_info(
+                test_id, db_user.id, subject=text
+            )
+            
+            if success:
+                await update.message.reply_text(
+                    f"✅ Test fani muvaffaqiyatli yangilandi: {text}",
+                    reply_markup=KeyboardFactory.get_back_keyboard(UserRole.TEACHER)
+                )
+                context.user_data['editing_test'] = False
+                context.user_data['editing_step'] = None
+            else:
+                await update.message.reply_text("❌ Test fanini yangilashda xatolik!")
+        except Exception as e:
+            await update.message.reply_text(f"❌ Xatolik: {str(e)}")
+    
+    async def _handle_time_limit_edit(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
+        """Vaqt chegarasini tahrirlash"""
+        if text == "🔙 Orqaga":
+            await self._handle_edit_field_selection(update, context, text)
+            return
+        
+        try:
+            time_limit = int(text)
+            if time_limit < 1:
+                await update.message.reply_text("❌ Vaqt chegarasi 1 daqiqadan kam bo'lishi mumkin emas!")
+                return
+            
+            test_id = context.user_data.get('editing_test_id')
+            
+            # Foydalanuvchi ma'lumotlarini olish
+            db_user = await self.bot.user_service.get_user_by_telegram_id(update.effective_user.id)
+            if not db_user:
+                await update.message.reply_text("❌ Foydalanuvchi topilmadi!")
+                return
+            
+            success = await self.bot.test_service.update_test_basic_info(
+                test_id, db_user.id, time_limit=time_limit
+            )
+            
+            if success:
+                await update.message.reply_text(
+                    f"✅ Vaqt chegarasi muvaffaqiyatli yangilandi: {time_limit} daqiqa",
+                    reply_markup=KeyboardFactory.get_back_keyboard(UserRole.TEACHER)
+                )
+                context.user_data['editing_test'] = False
+                context.user_data['editing_step'] = None
+            else:
+                await update.message.reply_text("❌ Vaqt chegarasini yangilashda xatolik!")
+        except ValueError:
+            await update.message.reply_text("❌ Iltimos, raqam kiriting!")
+        except Exception as e:
+            await update.message.reply_text(f"❌ Xatolik: {str(e)}")
+    
+    async def _handle_passing_score_edit(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
+        """O'tish ballini tahrirlash"""
+        if text == "🔙 Orqaga":
+            await self._handle_edit_field_selection(update, context, text)
+            return
+        
+        try:
+            passing_score = float(text)
+            if passing_score < 0 or passing_score > 100:
+                await update.message.reply_text("❌ O'tish balli 0-100 oralig'ida bo'lishi kerak!")
+                return
+            
+            test_id = context.user_data.get('editing_test_id')
+            
+            # Foydalanuvchi ma'lumotlarini olish
+            db_user = await self.bot.user_service.get_user_by_telegram_id(update.effective_user.id)
+            if not db_user:
+                await update.message.reply_text("❌ Foydalanuvchi topilmadi!")
+                return
+            
+            success = await self.bot.test_service.update_test_basic_info(
+                test_id, db_user.id, passing_score=passing_score
+            )
+            
+            if success:
+                await update.message.reply_text(
+                    f"✅ O'tish balli muvaffaqiyatli yangilandi: {passing_score}%",
+                    reply_markup=KeyboardFactory.get_back_keyboard(UserRole.TEACHER)
+                )
+                context.user_data['editing_test'] = False
+                context.user_data['editing_step'] = None
+            else:
+                await update.message.reply_text("❌ O'tish ballini yangilashda xatolik!")
+        except ValueError:
+            await update.message.reply_text("❌ Iltimos, raqam kiriting!")
+        except Exception as e:
+            await update.message.reply_text(f"❌ Xatolik: {str(e)}")

@@ -55,6 +55,8 @@ class CallbackHandlers:
             await self.back_to_menu_callback(update, context)
         elif data == "main_menu":
             await self.main_menu_callback(update, context)
+        elif data == "back_to_my_tests":
+            await self.back_to_my_tests_callback(update, context)
         
         # Inline test answer callbacks
         elif data.startswith("answer_"):
@@ -91,6 +93,23 @@ class CallbackHandlers:
             await self.finish_create_test(update, context)
         elif data == "create_test_cancel":
             await self.cancel_create_test(update, context)
+        
+        # Test tahrirlash callbacks
+        elif data.startswith("edit_test_"):
+            test_id = int(data.split("_")[2])
+            await self.edit_test_callback(update, context, test_id)
+        elif data.startswith("edit_question_"):
+            question_id = int(data.split("_")[2])
+            await self.edit_question_callback(update, context, question_id)
+        elif data.startswith("edit_answer_"):
+            answer_id = int(data.split("_")[2])
+            await self.edit_answer_callback(update, context, answer_id)
+        elif data.startswith("delete_question_"):
+            question_id = int(data.split("_")[2])
+            await self.delete_question_callback(update, context, question_id)
+        elif data.startswith("delete_answer_"):
+            answer_id = int(data.split("_")[2])
+            await self.delete_answer_callback(update, context, answer_id)
         
         else:
             await query.edit_message_text("❌ Noma'lum callback!")
@@ -1349,4 +1368,198 @@ Asosiy menyuga o'tish uchun /menu buyrug'ini yuboring.
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
+        await query.edit_message_text(text, reply_markup=reply_markup)
+
+    # Test tahrirlash callback funksiyalari
+    async def edit_test_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE, test_id: int):
+        """Testni tahrirlash uchun tanlash"""
+        query = update.callback_query
+        user = query.from_user
+        
+        # Foydalanuvchi ma'lumotlarini olish
+        db_user = await self.bot.user_service.get_user_by_telegram_id(user.id)
+        if not db_user:
+            await query.edit_message_text("❌ Foydalanuvchi topilmadi!")
+            return
+        
+        # Test ma'lumotlarini olish (teacher_id bo'yicha)
+        test_data = await self.bot.test_service.get_test_for_editing(test_id, db_user.id)
+        
+        if not test_data:
+            await query.edit_message_text("❌ Test topilmadi yoki sizga tegishli emas!")
+            return
+        
+        # Test tahrirlash holatini o'rnatish
+        context.user_data['editing_test'] = True
+        context.user_data['editing_test_id'] = test_id
+        context.user_data['editing_step'] = 'select_field'
+        
+        # Test ma'lumotlarini ko'rsatish
+        test_info = f"""
+✏️ Test tahrirlash: {test_data['title']}
+
+📝 Nomi: {test_data['title']}
+📄 Tavsif: {test_data['description'] or "Tavsif yo'q"}
+📚 Fan: {test_data['subject'] or "Fan yo'q"}
+⏱️ Vaqt chegarasi: {test_data['time_limit'] or "Cheklanmagan"} daqiqa
+🎯 O'tish balli: {test_data['passing_score'] or "Aniqlanmagan"}%
+📋 Savollar soni: {len(test_data['questions'])} ta
+📊 Holat: {'✅ Faol' if test_data['status'] == 'active' else '📝 Dastur'}
+
+Qaysi maydonni tahrirlashni xohlaysiz?
+        """
+        
+        keyboard = [
+            [InlineKeyboardButton("📝 Test nomi", callback_data=f"edit_field_title_{test_id}")],
+            [InlineKeyboardButton("📄 Tavsif", callback_data=f"edit_field_description_{test_id}")],
+            [InlineKeyboardButton("📚 Fan", callback_data=f"edit_field_subject_{test_id}")],
+            [InlineKeyboardButton("⏱️ Vaqt chegarasi", callback_data=f"edit_field_time_limit_{test_id}")],
+            [InlineKeyboardButton("🎯 O'tish balli", callback_data=f"edit_field_passing_score_{test_id}")],
+            [InlineKeyboardButton("📋 Savollar", callback_data=f"edit_field_questions_{test_id}")],
+            [InlineKeyboardButton("🔙 Orqaga", callback_data="back_to_my_tests")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await query.edit_message_text(test_info, reply_markup=reply_markup)
+    
+    async def edit_question_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE, question_id: int):
+        """Savolni tahrirlash"""
+        query = update.callback_query
+        user = query.from_user
+        
+        # Savol ma'lumotlarini olish
+        question = await self.bot.test_service.get_question_by_id(question_id)
+        
+        if not question:
+            await query.edit_message_text("❌ Savol topilmadi!")
+            return
+        
+        # Savol tahrirlash holatini o'rnatish
+        context.user_data['editing_question_id'] = question_id
+        context.user_data['editing_step'] = 'edit_question'
+        
+        question_info = f"""
+✏️ Savol tahrirlash
+
+📝 Savol: {question.question_text}
+🎯 Ball: {question.points}
+📊 Tartib: {question.order_number}
+
+Yangi savol matnini kiriting:
+        """
+        
+        keyboard = [
+            [InlineKeyboardButton("🔙 Orqaga", callback_data=f"edit_field_questions_{question.test_id}")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await query.edit_message_text(question_info, reply_markup=reply_markup)
+    
+    async def edit_answer_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE, answer_id: int):
+        """Javobni tahrirlash"""
+        query = update.callback_query
+        user = query.from_user
+        
+        # Javob ma'lumotlarini olish
+        answer = await self.bot.test_service.get_answer_by_id(answer_id)
+        
+        if not answer:
+            await query.edit_message_text("❌ Javob topilmadi!")
+            return
+        
+        # Javob tahrirlash holatini o'rnatish
+        context.user_data['editing_answer_id'] = answer_id
+        context.user_data['editing_step'] = 'edit_answer'
+        
+        correct_text = "Ha" if answer.is_correct else "Yo'q"
+        answer_info = f"""
+✏️ Javob tahrirlash
+
+📝 Javob: {answer.answer_text}
+✅ To'g'ri: {correct_text}
+📊 Tartib: {answer.order_number}
+
+Yangi javob matnini kiriting:
+        """
+        
+        keyboard = [
+            [InlineKeyboardButton("🔙 Orqaga", callback_data=f"edit_question_{answer.question_id}")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await query.edit_message_text(answer_info, reply_markup=reply_markup)
+    
+    async def delete_question_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE, question_id: int):
+        """Savolni o'chirish"""
+        query = update.callback_query
+        user = query.from_user
+        
+        try:
+            # Foydalanuvchi ma'lumotlarini olish
+            db_user = await self.bot.user_service.get_user_by_telegram_id(user.id)
+            if not db_user:
+                await query.edit_message_text("❌ Foydalanuvchi topilmadi!")
+                return
+            
+            success = await self.bot.test_service.delete_question(question_id, db_user.id)
+            
+            if success:
+                await query.edit_message_text(
+                    "✅ Savol muvaffaqiyatli o'chirildi!",
+                    reply_markup=InlineKeyboardMarkup([[
+                        InlineKeyboardButton("🔙 Orqaga", callback_data="edit_field_questions")
+                    ]])
+                )
+            else:
+                await query.edit_message_text("❌ Savolni o'chirishda xatolik!")
+        except Exception as e:
+            await query.edit_message_text(f"❌ Xatolik: {str(e)}")
+    
+    async def delete_answer_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE, answer_id: int):
+        """Javobni o'chirish"""
+        query = update.callback_query
+        user = query.from_user
+        
+        try:
+            # Foydalanuvchi ma'lumotlarini olish
+            db_user = await self.bot.user_service.get_user_by_telegram_id(user.id)
+            if not db_user:
+                await query.edit_message_text("❌ Foydalanuvchi topilmadi!")
+                return
+            
+            success = await self.bot.test_service.delete_answer(answer_id, db_user.id)
+            
+            if success:
+                await query.edit_message_text(
+                    "✅ Javob muvaffaqiyatli o'chirildi!",
+                    reply_markup=InlineKeyboardMarkup([[
+                        InlineKeyboardButton("🔙 Orqaga", callback_data="edit_question")
+                    ]])
+                )
+            else:
+                await query.edit_message_text("❌ Javobni o'chirishda xatolik!")
+        except Exception as e:
+            await query.edit_message_text(f"❌ Xatolik: {str(e)}")
+    
+    async def back_to_my_tests_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Mening testlarim bo'limiga qaytish"""
+        query = update.callback_query
+        user = query.from_user
+        
+        # Foydalanuvchi ma'lumotlarini olish
+        db_user = await self.bot.user_service.get_user_by_telegram_id(user.id)
+        if not db_user:
+            await query.edit_message_text("❌ Foydalanuvchi topilmadi!")
+            return
+        
+        # Testlarni olish
+        tests = await self.bot.test_service.get_teacher_tests(db_user.id)
+        
+        if not tests:
+            await query.edit_message_text("📝 Sizda hali testlar yo'q. Yangi test yarating!")
+            return
+        
+        text = "📋 Mening testlarim:\n\nKerakli testni tanlang va batafsil ma'lumotlarni ko'ring:"
+        
+        reply_markup = KeyboardFactory.get_teacher_tests_keyboard(tests)
         await query.edit_message_text(text, reply_markup=reply_markup)

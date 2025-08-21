@@ -453,3 +453,210 @@ class TestService:
             ).count()
         finally:
             self.db.close_session(session)
+    
+    # Test tahrirlash metodlari
+    async def update_test_basic_info(self, test_id: int, teacher_id: int, **kwargs) -> bool:
+        """Testning asosiy ma'lumotlarini yangilash"""
+        session = self.db.get_session()
+        try:
+            test = session.query(Test).filter(
+                Test.id == test_id,
+                Test.teacher_id == teacher_id
+            ).first()
+            
+            if not test:
+                return False
+            
+            # Yangilanish mumkin bo'lgan maydonlar
+            allowed_fields = ['title', 'description', 'subject', 'time_limit', 'passing_score', 'category']
+            
+            for field, value in kwargs.items():
+                if field in allowed_fields and value is not None:
+                    setattr(test, field, value)
+            
+            session.commit()
+            return True
+            
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            self.db.close_session(session)
+    
+    async def update_question(self, question_id: int, teacher_id: int, **kwargs) -> bool:
+        """Savolni yangilash"""
+        session = self.db.get_session()
+        try:
+            # Savol o'qituvchiga tegishli ekanligini tekshirish
+            question = session.query(Question).join(Test).filter(
+                Question.id == question_id,
+                Test.teacher_id == teacher_id
+            ).first()
+            
+            if not question:
+                return False
+            
+            # Yangilanish mumkin bo'lgan maydonlar
+            allowed_fields = ['question_text', 'points', 'order_number']
+            
+            for field, value in kwargs.items():
+                if field in allowed_fields and value is not None:
+                    setattr(question, field, value)
+            
+            session.commit()
+            return True
+            
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            self.db.close_session(session)
+    
+    async def update_answer(self, answer_id: int, teacher_id: int, **kwargs) -> bool:
+        """Javobni yangilash"""
+        session = self.db.get_session()
+        try:
+            # Javob o'qituvchiga tegishli ekanligini tekshirish
+            answer = session.query(Answer).join(Question).join(Test).filter(
+                Answer.id == answer_id,
+                Test.teacher_id == teacher_id
+            ).first()
+            
+            if not answer:
+                return False
+            
+            # Yangilanish mumkin bo'lgan maydonlar
+            allowed_fields = ['answer_text', 'is_correct', 'order_number']
+            
+            for field, value in kwargs.items():
+                if field in allowed_fields and value is not None:
+                    setattr(answer, field, value)
+            
+            session.commit()
+            return True
+            
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            self.db.close_session(session)
+    
+    async def delete_question(self, question_id: int, teacher_id: int) -> bool:
+        """Savolni o'chirish"""
+        session = self.db.get_session()
+        try:
+            # Savol o'qituvchiga tegishli ekanligini tekshirish
+            question = session.query(Question).join(Test).filter(
+                Question.id == question_id,
+                Test.teacher_id == teacher_id
+            ).first()
+            
+            if not question:
+                return False
+            
+            # Avval javoblarni o'chirish
+            session.query(Answer).filter(Answer.question_id == question_id).delete()
+            
+            # Keyin savolni o'chirish
+            session.delete(question)
+            session.commit()
+            return True
+            
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            self.db.close_session(session)
+    
+    async def delete_answer(self, answer_id: int, teacher_id: int) -> bool:
+        """Javobni o'chirish"""
+        session = self.db.get_session()
+        try:
+            # Javob o'qituvchiga tegishli ekanligini tekshirish
+            answer = session.query(Answer).join(Question).join(Test).filter(
+                Answer.id == answer_id,
+                Test.teacher_id == teacher_id
+            ).first()
+            
+            if not answer:
+                return False
+            
+            session.delete(answer)
+            session.commit()
+            return True
+            
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            self.db.close_session(session)
+    
+    async def get_test_for_editing(self, test_id: int, teacher_id: int) -> dict:
+        """Testni tahrirlash uchun ma'lumotlarni olish"""
+        session = self.db.get_session()
+        try:
+            test = session.query(Test).filter(
+                Test.id == test_id,
+                Test.teacher_id == teacher_id
+            ).first()
+            
+            if not test:
+                return None
+            
+            questions = session.query(Question).filter(
+                Question.test_id == test_id
+            ).order_by(Question.order_number).all()
+            
+            test_data = {
+                'id': test.id,
+                'title': test.title,
+                'description': test.description,
+                'subject': test.subject,
+                'time_limit': test.time_limit,
+                'passing_score': test.passing_score,
+                'category': test.category,
+                'status': test.status,
+                'questions': []
+            }
+            
+            for question in questions:
+                answers = session.query(Answer).filter(
+                    Answer.question_id == question.id
+                ).order_by(Answer.order_number).all()
+                
+                question_data = {
+                    'id': question.id,
+                    'text': question.question_text,
+                    'points': question.points,
+                    'order_number': question.order_number,
+                    'answers': [
+                        {
+                            'id': answer.id,
+                            'text': answer.answer_text,
+                            'is_correct': answer.is_correct,
+                            'order_number': answer.order_number
+                        } for answer in answers
+                    ]
+                }
+                test_data['questions'].append(question_data)
+            
+            return test_data
+            
+        finally:
+            self.db.close_session(session)
+    
+    async def get_question_by_id(self, question_id: int) -> Question:
+        """ID bo'yicha savolni olish"""
+        session = self.db.get_session()
+        try:
+            return session.query(Question).filter(Question.id == question_id).first()
+        finally:
+            self.db.close_session(session)
+    
+    async def get_answer_by_id(self, answer_id: int) -> Answer:
+        """ID bo'yicha javobni olish"""
+        session = self.db.get_session()
+        try:
+            return session.query(Answer).filter(Answer.id == answer_id).first()
+        finally:
+            self.db.close_session(session)
