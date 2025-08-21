@@ -48,6 +48,9 @@ class MessageHandlers:
         elif context.user_data.get('searching_test'):
             # Test qidirish logikasi
             await self._handle_test_search(update, context, text)
+        elif context.user_data.get('taking_test'):
+            # Test ishlash logikasi
+            await self._handle_test_answers(update, context, text)
         else:
             await update.message.reply_text("❓ Tushunarsiz xabar. /help komandasi bilan yordam oling.")
     
@@ -433,9 +436,166 @@ class MessageHandlers:
             await update.message.reply_text(
                 f"❌ Xatolik: {str(e)}\n\n"
                 f"Iltimos, ABCD formatini to'g'ri kiriting!",
-                reply_markup=KeyboardFactory.get_back_keyboard()
+                                reply_markup=KeyboardFactory.get_back_keyboard()
             )
+    
+    async def _handle_test_answers(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
+        """Test javoblarini qabul qilish"""
+        if text == '🔙 Orqaga':
+            # Test ishlash holatini to'xtatish
+            context.user_data['taking_test'] = False
+            context.user_data['current_test'] = {}
+            
+            await update.message.reply_text(
+                "❌ Test bekor qilindi!",
+                reply_markup=KeyboardFactory.get_main_keyboard(UserRole.STUDENT)
+            )
+            return
+        
+        try:
+            # Test ma'lumotlarini olish
+            current_test = context.user_data.get('current_test', {})
+            test_id = current_test.get('test_id')
+            session_id = current_test.get('session_id')
+            
+            if not test_id or not session_id:
+                await update.message.reply_text("❌ Test ma'lumotlari topilmadi!")
+                return
+            
+            # Test ma'lumotlarini olish
+            test = await self.bot.test_service.get_test_by_id(test_id)
+            if not test:
+                await update.message.reply_text("❌ Test topilmadi!")
+                return
+            
+            # Test savollarini olish
+            test_questions = await self.bot.test_service.get_test_questions(test_id)
+            questions_count = len(test_questions)
+            
+            # Javoblarni parse qilish
+            parsed_answers = await self.bot.test_creation_service.parse_abcd_format(text)
+            
+            if not parsed_answers:
+                await update.message.reply_text(
+                    "❌ Javoblar formatini to'g'ri kiriting!\n\n"
+                    "💡 Qo'llab-quvvatlanadigan formatlar:\n"
+                    "• ABCDABCD... (katta harflar)\n"
+                    "• abcdabcd... (kichik harflar)\n"
+                    "• 1A2B3C4D... (raqam + katta harf)\n"
+                    "• 1a2b3c4d... (raqam + kichik harf)\n\n"
+                    "📝 Misol: abcdabcdabcd"
+                )
+                return
+            
+            # Javoblar sonini tekshirish
+            if len(parsed_answers) != questions_count:
+                await update.message.reply_text(
+                    f"❌ Javoblar soni noto'g'ri!\n\n"
+                    f"📊 Testda {questions_count} ta savol bor\n"
+                    f"📝 Siz {len(parsed_answers)} ta javob kiritdingiz\n\n"
+                    f"💡 To'g'ri sonida javob kiriting!"
+                )
+                return
+            
+            # Javoblarni saqlash
+            context.user_data['current_test']['answers'] = parsed_answers
+            
+            # Testni tugatish va natijalarni hisoblash
+            await self._finish_test(update, context, test, parsed_answers, questions_count)
+            
+        except Exception as e:
+            await update.message.reply_text(
+                f"❌ Xatolik yuz berdi: {str(e)}\n\n"
+                f"Iltimos, javoblarni qayta kiriting!"
+            )
+    
+    async def _finish_test(self, update: Update, context: ContextTypes.DEFAULT_TYPE, test, answers, questions_count):
+        """Testni tugatish va natijalarni hisoblash"""
+        try:
+            # Test savollarini olish
+            test_questions = await self.bot.test_service.get_test_questions(test.id)
+            
+            # To'g'ri javoblarni hisoblash
+            correct_answers = 0
+            total_score = 0
+            max_score = 0
+            
+            for i, question in enumerate(test_questions):
+                max_score += question.points
+                
+                # Savolning to'g'ri javobini olish
+                question_answers = await self.bot.test_service.get_question_answers(question.id)
+                correct_answer = None
+                
+                for answer in question_answers:
+                    if answer.is_correct:
+                        correct_answer = answer.answer_text
+                        break
+                
+                if correct_answer and i < len(answers):
+                    # Foydalanuvchi javobini tekshirish
+                    user_answer = answers[i]['correct_answer']
+                    
+                    if user_answer.upper() == correct_answer.upper():
+                        correct_answers += 1
+                        total_score += question.points
+            
+            # Foizni hisoblash
+            percentage = (total_score / max_score) * 100 if max_score > 0 else 0
+            
+            # Natijani saqlash
+            current_test = context.user_data.get('current_test', {})
+            session_id = current_test.get('session_id')
+            user = update.effective_user
+            db_user = await self.bot.user_service.get_user_by_telegram_id(user.id)
+            
+            # Test natijasini saqlash
+            test_result = await self.bot.test_service.submit_test_result(
+                test_id=test.id,
+                student_id=db_user.id,
+                score=total_score,
+                max_score=max_score,
+                answers_data={'answers': answers}
+            )
+            
+            # Test ishlash holatini to'xtatish
+            context.user_data['taking_test'] = False
+            context.user_data['current_test'] = {}
+            
+            # Natija xabarini yuborish
+            if percentage >= (test.passing_score or 0):
+                result_text = "🎉 Tabriklaymiz! Testni o'tdingiz!"
+            else:
+                result_text = "😔 Afsus! Testni o'ta olmadingiz."
+            
+            result_message = f"""
+✅ Test tugatildi!
 
+📋 Test: {test.title}
+📊 Savollar soni: {questions_count}
+✅ To'g'ri javoblar: {correct_answers}/{questions_count}
+📈 Ball: {total_score}/{max_score}
+📊 Foiz: {percentage:.1f}%
+
+🎯 O'tish balli: {test.passing_score or 'Aniqlanmagan'}%
+{result_text}
+            """
+            
+            keyboard = [
+                [InlineKeyboardButton("📊 Batafsil natija", callback_data=f"view_result_{test_result.id}")],
+                [InlineKeyboardButton("📝 Boshqa test", callback_data="available_tests")],
+                [InlineKeyboardButton("🏠 Asosiy menyu", callback_data="back_to_menu")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            await update.message.reply_text(result_message, reply_markup=reply_markup)
+            
+        except Exception as e:
+            await update.message.reply_text(
+                f"❌ Test tugatishda xatolik: {str(e)}",
+                reply_markup=KeyboardFactory.get_main_keyboard(UserRole.STUDENT)
+            )
+    
     async def _handle_test_search(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
         """Test qidirish logikasi"""
         if text == '🔙 Orqaga':

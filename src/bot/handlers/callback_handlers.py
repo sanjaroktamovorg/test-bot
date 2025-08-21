@@ -43,6 +43,9 @@ class CallbackHandlers:
             await self.search_test_callback(update, context)
         elif data == "my_results":
             await self.my_results_callback(update, context)
+        elif data.startswith("start_test_"):
+            test_id = int(data.split("_")[2])
+            await self.start_test_callback(update, context, test_id)
         else:
             await query.edit_message_text("❌ Noma'lum callback!")
     
@@ -209,8 +212,34 @@ Quyidagi tugmalardan birini tanlang:
             'start_time': test_session.start_time
         }
         
-        # Birinchi savolni ko'rsatish
-        await self.show_test_question(update, context, 0)
+        # Test ma'lumotlarini ko'rsatish va boshlash
+        test_questions = await self.bot.test_service.get_test_questions(test_id)
+        questions_count = len(test_questions)
+        
+        test_info = f"""
+📝 Test boshlanmoqda!
+
+📋 Test: {test.title}
+📊 Savollar soni: {questions_count}
+⏱️ Vaqt chegarasi: {test.time_limit or "Cheklanmagan"} daqiqa
+🎯 O'tish balli: {test.passing_score or "Aniqlanmagan"}%
+
+💡 Javoblarni quyidagi formatda kiriting:
+• ABCDABCD... (katta harflar)
+• abcdabcd... (kichik harflar)
+• 1A2B3C4D... (raqam + katta harf)
+• 1a2b3c4d... (raqam + kichik harf)
+
+📝 Misol: abcdabcdabcd
+        """
+        
+        keyboard = [
+            [InlineKeyboardButton("🚀 Testni boshlash", callback_data=f"start_test_{test_id}")],
+            [InlineKeyboardButton("🔙 Orqaga", callback_data="available_tests")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await query.edit_message_text(test_info, reply_markup=reply_markup)
     
     async def view_result_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE, result_id: int):
         """Natija ko'rish callback"""
@@ -361,7 +390,78 @@ Quyidagi tugmalardan birini tanlang:
         reply_markup = KeyboardFactory.get_teacher_tests_keyboard(tests)
         
         await query.edit_message_text(text, reply_markup=reply_markup)
+    
+    async def start_test_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE, test_id: int):
+        """Testni boshlash callback"""
+        query = update.callback_query
+        user = query.from_user
+        
+        # Foydalanuvchi roli tekshirish
+        user_role = await self.bot.user_service.get_user_role(user.id)
+        if user_role != UserRole.STUDENT:
+            await query.edit_message_text("❌ Bu funksiya faqat o'quvchilar uchun!")
+            return
+        
+        # Test ma'lumotlarini olish
+        test = await self.bot.test_service.get_test_by_id(test_id)
+        if not test:
+            await query.edit_message_text("❌ Test topilmadi!")
+            return
+        
+        # Test faol ekanligini tekshirish
+        if test.status != "active":
+            await query.edit_message_text("❌ Bu test hali faol emas!")
+            return
+        
+        # Foydalanuvchi ma'lumotlarini olish
+        db_user = await self.bot.user_service.get_user_by_telegram_id(user.id)
+        if not db_user:
+            await query.edit_message_text("❌ Foydalanuvchi topilmadi!")
+            return
+        
+        # Test sessiyasini boshlash
+        test_session = await self.bot.test_taking_service.start_test_session(test_id, db_user.id)
+        if not test_session:
+            await query.edit_message_text("❌ Test sessiyasi boshlanmadi!")
+            return
+        
+        # Test ma'lumotlarini context ga saqlash
+        context.user_data['current_test'] = {
+            'test_id': test_id,
+            'session_id': test_session.id,
+            'current_question': 0,
+            'answers': {},
+            'start_time': test_session.start_time,
+            'test_title': test.title
+        }
+        
+        # Test ishlash holatini context ga saqlash
+        context.user_data['taking_test'] = True
+        
+        # Test boshlash xabarini yuborish
+        test_questions = await self.bot.test_service.get_test_questions(test_id)
+        questions_count = len(test_questions)
+        
+        start_message = f"""
+🚀 Test boshlanmoqda!
 
+📋 Test: {test.title}
+📊 Savollar soni: {questions_count}
+⏱️ Vaqt chegarasi: {test.time_limit or "Cheklanmagan"} daqiqa
+
+💡 Javoblarni quyidagi formatda kiriting:
+• ABCDABCD... (katta harflar)
+• abcdabcd... (kichik harflar)
+• 1A2B3C4D... (raqam + katta harf)
+• 1a2b3c4d... (raqam + kichik harf)
+
+📝 Misol: abcdabcdabcd
+
+🔽 Quyida javoblaringizni kiriting:
+        """
+        
+        await query.edit_message_text(start_message)
+    
     async def my_results_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Mening natijalarim callback"""
         query = update.callback_query
