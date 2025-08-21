@@ -111,16 +111,16 @@ Quyidagi tugmalardan birini tanlang:
         version_text = """
 🤖 Test Bot - Versiya ma'lumotlari
 
-            📋 Versiya: v0.9.31
+            📋 Versiya: v0.9.32
 📅 Yangilangan: 2025-01-27
 👨‍💻 Developer: Test Bot Team
 
             🆕 So'nggi o'zgarishlar:
-            • Asosiy menular soddalashtirildi
-            • O'quvchilar va o'qituvchilar uchun minimal menu
-            • Ortiqcha tugmalar olib tashlandi
+            • "Orqaga" tugmasi to'liq yangilandi
+            • Eski asosiy tugmalar to'plami olib tashlandi
+            • Yangi minimal menyu bilan almashtirildi
+            • Barcha "Orqaga" tugmalari yangi menyuga qaytadi
             • Foydalanuvchi tajribasi yaxshilandi
-            • Bot interfeysi optimallashtirildi
 
 🔧 Texnik ma'lumotlar:
 • Python 3.10+

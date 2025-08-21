@@ -1,5 +1,27 @@
 # Test Bot - Changelog
 
+## [v0.9.32] - 2025-01-27
+
+### ✅ "Orqaga" tugmasi to'liq yangilandi
+- **Eski tugmalar olib tashlandi** - Eski asosiy tugmalar to'plami to'liq olib tashlandi
+- **Yangi minimal menyu** - Yangi soddalashtirilgan menyu bilan almashtirildi
+- **Barcha "Orqaga" tugmalari** - Endi barcha "Orqaga" tugmalari yangi menyuga qaytadi
+- **Foydalanuvchi tajribasi** - Yaxshilangan va optimallashtirilgan
+
+### 🔧 Yangi funksiyalar
+- **get_back_keyboard()** - Foydalanuvchi roliga qarab asosiy menyuga qaytish
+- **Profil tahrirlash** - "Orqaga" tugmasi asosiy menyuga qaytadi
+- **Test qidirish** - Xatolikda asosiy menyuga qaytish
+- **Barcha funksiyalar** - Yangi minimal menyu bilan ishlaydi
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- "Orqaga" tugmasi yangilandi ✅
+- Eski tugmalar olib tashlandi ✅
+- Yangi menyu bilan ishlaydi ✅
+
+---
+
 ## [v0.9.31] - 2025-01-27
 
 ### ✅ Asosiy menular soddalashtirildi

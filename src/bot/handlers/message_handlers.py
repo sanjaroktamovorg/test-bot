@@ -984,21 +984,24 @@ class MessageHandlers:
                     # Qidirish holatini to'xtatish
                     context.user_data['searching_test'] = False
                 else:
+                    user_role = await self.bot.user_service.get_user_role(user.id)
                     await update.message.reply_text(
                         "❌ Bu test hali faol emas!",
-                        reply_markup=KeyboardFactory.get_back_keyboard()
+                        reply_markup=KeyboardFactory.get_back_keyboard(user_role)
                     )
             else:
+                user_role = await self.bot.user_service.get_user_role(user.id)
                 await update.message.reply_text(
                     f"❌ \"{text}\" nomli yoki kodli test topilmadi!\n\n"
                     f"🔍 Qayta urinib ko'ring yoki boshqa test qidiring.",
-                    reply_markup=KeyboardFactory.get_back_keyboard()
+                    reply_markup=KeyboardFactory.get_back_keyboard(user_role)
                 )
                 
         except Exception as e:
+            user_role = await self.bot.user_service.get_user_role(user.id)
             await update.message.reply_text(
                 f"❌ Qidirishda xatolik yuz berdi: {str(e)}",
-                reply_markup=KeyboardFactory.get_back_keyboard()
+                reply_markup=KeyboardFactory.get_back_keyboard(user_role)
             )
     
     async def edit_profile_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1090,8 +1093,9 @@ Qaysi ma'lumotni tahrirlashni xohlaysiz?
             context.user_data['editing_profile'] = False
             context.user_data['edit_field'] = None
             
-            # Profil tahrirlash menyusiga qaytish
-            await self.edit_profile_command(update, context)
+            # Asosiy menyuga qaytish
+            user_role = await self.bot.user_service.get_user_role(user.id)
+            await update.message.reply_text("🏠 Asosiy menyuga qaytdingiz.", reply_markup=KeyboardFactory.get_main_keyboard(user_role))
             return
         
         user = update.effective_user
@@ -1156,14 +1160,9 @@ Qaysi ma'lumotni tahrirlashni xohlaysiz?
             context.user_data['editing_profile'] = False
             context.user_data['edit_field'] = None
             
-            # Asosiy profil menyusiga qaytish
+            # Asosiy menyuga qaytish
             user_role = await self.bot.user_service.get_user_role(user.id)
-            keyboard = [
-                [KeyboardButton("✏️ Profil tahrirlash")],
-                [KeyboardButton("📊 Batafsil statistika")],
-                [KeyboardButton("🔙 Orqaga")]
-            ]
-            reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+            reply_markup = KeyboardFactory.get_main_keyboard(user_role)
             
             await update.message.reply_text(success_message, reply_markup=reply_markup)
             

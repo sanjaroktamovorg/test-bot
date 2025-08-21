@@ -93,6 +93,9 @@ class KeyboardFactory:
         return InlineKeyboardMarkup(keyboard)
     
     @staticmethod
-    def get_back_keyboard():
+    def get_back_keyboard(user_role: UserRole = None):
         """Orqaga qaytish uchun keyboard"""
-        return ReplyKeyboardMarkup([[KeyboardButton("🔙 Orqaga")]], resize_keyboard=True)
+        if user_role:
+            return KeyboardFactory.get_main_keyboard(user_role)
+        else:
+            return ReplyKeyboardMarkup([[KeyboardButton("🔙 Orqaga")]], resize_keyboard=True)
