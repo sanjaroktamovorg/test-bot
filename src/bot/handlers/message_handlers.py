@@ -538,7 +538,10 @@ class MessageHandlers:
                     # Foydalanuvchi javobini tekshirish
                     user_answer = answers[i]['correct_answer']
                     
-                    if user_answer.upper() == correct_answer.upper():
+                    # To'g'ri javobni "Variant A" dan "A" ga o'zgartirish
+                    correct_answer_letter = correct_answer.replace('Variant ', '').strip()
+                    
+                    if user_answer.upper() == correct_answer_letter.upper():
                         correct_answers += 1
                         total_score += question.points
             
