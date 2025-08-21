@@ -308,6 +308,7 @@ class MessageHandlers:
         user = update.effective_user
         user_settings = await self.bot.user_service.get_user_settings(user.id)
         db_user = await self.bot.user_service.get_user_by_telegram_id(user.id)
+        profile_data = await self.bot.user_service.get_profile_data(user.id)
         
         if not user_settings or not db_user:
             await update.message.reply_text("❌ Foydalanuvchi ma'lumotlari topilmadi!")
@@ -328,6 +329,13 @@ class MessageHandlers:
 📧 Username: @{user.username or 'Yoq'}
 🎭 Rol: O'qituvchi
 📅 Ro'yxatdan o'tgan: {db_user.created_at.strftime('%d.%m.%Y')}
+
+📷 Profil ma'lumotlari:
+👨‍🏫 To'liq ism: {profile_data.get('full_name', 'Kiritilmagan')}
+🎂 Yosh: {profile_data.get('age', 'Kiritilmagan')} yosh
+📝 Haqida: {profile_data.get('about', 'Kiritilmagan')}
+💼 Tajriba: {profile_data.get('experience', 'Kiritilmagan')} yil
+📚 Mutaxassislik: {profile_data.get('specialization', 'Kiritilmagan')}
 
 📊 Statistika:
 📝 Yaratilgan testlar: {tests_count}
@@ -352,6 +360,10 @@ class MessageHandlers:
 📧 Username: @{user.username or 'Yoq'}
 🎭 Rol: O'quvchi
 📅 Ro'yxatdan o'tgan: {db_user.created_at.strftime('%d.%m.%Y')}
+
+📷 Profil ma'lumotlari:
+👨‍🎓 To'liq ism: {profile_data.get('full_name', 'Kiritilmagan')}
+🎂 Yosh: {profile_data.get('age', 'Kiritilmagan')} yosh
 
 📊 Statistika:
 📝 Bajarilgan testlar: {completed_tests}
@@ -962,7 +974,6 @@ Qaysi ma'lumotni tahrirlashni xohlaysiz?
 
 Quyidagi ma'lumotlarni kiritish/yangilash mumkin:
 
-📷 Profil rasmi
 👨‍🎓 To'liq ism-familya
 🎂 Yosh
 
@@ -970,7 +981,7 @@ Qaysi ma'lumotni tahrirlashni xohlaysiz?
             """
             
             keyboard = [
-                [KeyboardButton("📷 Profil rasmi"), KeyboardButton("👨‍🎓 Ism-familya")],
+                [KeyboardButton("👨‍🎓 Ism-familya")],
                 [KeyboardButton("🎂 Yosh")],
                 [KeyboardButton("🔙 Orqaga")]
             ]
@@ -1053,8 +1064,27 @@ Qaysi ma'lumotni tahrirlashni xohlaysiz?
                     )
                     return
             
-            # Ma'lumotlarni saqlash (hozircha faqat xabar ko'rsatamiz)
-            success_message = f"✅ {field_type} muvaffaqiyatli yangilandi!\n\n📝 Yangi qiymat: {text}"
+            # Ma'lumotlarni saqlash
+            field_mapping = {
+                "📷 Profil rasmi": "profile_photo",
+                "👨‍🏫 Ism-familya": "full_name",
+                "👨‍🎓 Ism-familya": "full_name",
+                "🎂 Yosh": "age",
+                "📝 Haqida": "about",
+                "💼 Tajriba": "experience",
+                "📚 Mutaxassislik fani": "specialization"
+            }
+            
+            db_field = field_mapping.get(field_type)
+            if db_field:
+                # Ma'lumotlarni bazaga saqlash
+                success = await self.bot.user_service.update_profile_field(user.id, db_field, text)
+                if success:
+                    success_message = f"✅ {field_type} muvaffaqiyatli yangilandi!\n\n📝 Yangi qiymat: {text}"
+                else:
+                    success_message = f"❌ {field_type} yangilashda xatolik yuz berdi!"
+            else:
+                success_message = f"✅ {field_type} muvaffaqiyatli yangilandi!\n\n📝 Yangi qiymat: {text}"
             
             # Profil tahrirlash holatini to'xtatish
             context.user_data['editing_profile'] = False

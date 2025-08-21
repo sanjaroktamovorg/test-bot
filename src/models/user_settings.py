@@ -30,6 +30,14 @@ class UserSettings(Base):
     auto_submit = Column(Boolean, default=False)  # avtomatik topshirish
     show_results_immediately = Column(Boolean, default=True)  # natijani darhol ko'rsatish
     
+    # Profil ma'lumotlari
+    profile_photo = Column(String(500), nullable=True)  # profil rasmi URL
+    full_name = Column(String(100), nullable=True)  # to'liq ism-familya
+    age = Column(Integer, nullable=True)  # yosh
+    about = Column(Text, nullable=True)  # haqida (o'qituvchilar uchun)
+    experience = Column(Integer, nullable=True)  # tajriba yillari (o'qituvchilar uchun)
+    specialization = Column(String(100), nullable=True)  # mutaxassislik fani (o'qituvchilar uchun)
+    
     # Vaqt sozlamalari
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

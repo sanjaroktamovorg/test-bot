@@ -1,5 +1,32 @@
 # Test Bot - Changelog
 
+## [v0.9.28] - 2025-01-27
+
+### ✅ Profil ma'lumotlari to'liq funksional qilindi
+- **Bazaga saqlash** - Profil ma'lumotlari UserSettings jadvaliga saqlanadi
+- **Profil ko'rish** - Barcha kiritilgan ma'lumotlar profil ko'rishda ko'rsatiladi
+- **O'quvchilar uchun** - Rasm kiritish funksiyasi olib tashlandi
+- **Ma'lumotlar validatsiyasi** - Yosh va tajriba uchun cheklovlar
+
+### 🔧 Texnik o'zgarishlar
+- **UserSettings modeli yangilandi** - Profil maydonlari qo'shildi:
+  - profile_photo (profil rasmi URL)
+  - full_name (to'liq ism-familya)
+  - age (yosh)
+  - about (haqida)
+  - experience (tajriba)
+  - specialization (mutaxassislik)
+- **UserService yangilandi** - Profil ma'lumotlarini saqlash va olish metodlari
+- **Message handlers yangilandi** - Profil tahrirlash va ko'rish funksiyalari
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- Profil ma'lumotlari saqlanadi ✅
+- Profil ko'rish to'liq ishlaydi ✅
+- O'quvchilar uchun rasm kiritish yo'q ✅
+
+---
+
 ## [v0.9.27] - 2025-01-27
 
 ### ✅ Profil tugmasi tuzatildi va asosiy menyu soddalashtirildi

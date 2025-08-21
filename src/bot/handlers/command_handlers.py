@@ -111,16 +111,16 @@ Quyidagi tugmalardan birini tanlang:
         version_text = """
 🤖 Test Bot - Versiya ma'lumotlari
 
-            📋 Versiya: v0.9.27
+            📋 Versiya: v0.9.28
 📅 Yangilangan: 2025-01-27
 👨‍💻 Developer: Test Bot Team
 
             🆕 So'nggi o'zgarishlar:
-            • Profil tugmasi sozlamalar ichida qoldirildi
-            • Profil funksiyalari xatoliklari tuzatildi
-            • TestService statistika metodlari qo'shildi
-            • Asosiy menyu soddalashtirildi
-            • Profil tahrirlash to'liq ishlaydi
+            • Profil ma'lumotlari bazaga saqlanadi
+            • Profil ko'rishda barcha ma'lumotlar ko'rsatiladi
+            • O'quvchilar uchun rasm kiritish olib tashlandi
+            • UserSettings modeliga profil maydonlari qo'shildi
+            • Profil tahrirlash to'liq funksional
 
 🔧 Texnik ma'lumotlar:
 • Python 3.10+

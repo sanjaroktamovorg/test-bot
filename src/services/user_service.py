@@ -155,6 +155,40 @@ class UserService:
         finally:
             self.db.close_session(session)
     
+    async def update_profile_field(self, telegram_id: int, field: str, value) -> bool:
+        """Profil maydonini yangilash"""
+        session = self.db.get_session()
+        try:
+            user_settings = session.query(UserSettings).filter(UserSettings.telegram_id == telegram_id).first()
+            if user_settings and hasattr(user_settings, field):
+                setattr(user_settings, field, value)
+                session.commit()
+                return True
+            return False
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            self.db.close_session(session)
+    
+    async def get_profile_data(self, telegram_id: int) -> dict:
+        """Profil ma'lumotlarini olish"""
+        session = self.db.get_session()
+        try:
+            user_settings = session.query(UserSettings).filter(UserSettings.telegram_id == telegram_id).first()
+            if user_settings:
+                return {
+                    'profile_photo': user_settings.profile_photo,
+                    'full_name': user_settings.full_name,
+                    'age': user_settings.age,
+                    'about': user_settings.about,
+                    'experience': user_settings.experience,
+                    'specialization': user_settings.specialization
+                }
+            return {}
+        finally:
+            self.db.close_session(session)
+    
     async def sync_user_roles(self) -> dict:
         """User va UserSettings jadvallaridagi rollarni sinxronlashtirish"""
         session = self.db.get_session()
