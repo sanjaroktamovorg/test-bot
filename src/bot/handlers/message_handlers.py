@@ -650,6 +650,9 @@ class MessageHandlers:
             # Natija xabarini tayyorlash
             percentage = (correct_answers / questions_count) * 100 if questions_count > 0 else 0
             
+            # Natija holatini alohida aniqlash
+            result_status = '✅ O\'tdi' if percentage >= (test.passing_score or 0) else '❌ O\'tmadi'
+            
             notification_message = f"""
 📊 Yangi test natijasi!
 
@@ -657,7 +660,7 @@ class MessageHandlers:
 📝 Test: {test.title}
 ✅ To'g'ri javoblar: {correct_answers}/{questions_count}
 📊 Foiz: {percentage:.1f}%
-🎯 Natija: {'✅ O\'tdi' if percentage >= (test.passing_score or 0) else '❌ O\'tmadi'}
+🎯 Natija: {result_status}
 
 📈 Batafsil natijalarni ko'rish uchun "📊 Natijalar" tugmasini bosing!
             """
