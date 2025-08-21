@@ -586,7 +586,7 @@ class MessageHandlers:
             keyboard = [
                 [InlineKeyboardButton("📊 Batafsil natija", callback_data=f"view_result_{test_result.id}")],
                 [InlineKeyboardButton("📝 Boshqa test", callback_data="available_tests")],
-                [InlineKeyboardButton("🏠 Asosiy menyu", callback_data="back_to_menu")]
+
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
             

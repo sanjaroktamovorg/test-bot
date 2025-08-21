@@ -22,8 +22,7 @@ class CallbackHandlers:
             await self.role_teacher_callback(update, context)
         elif data == "role_student":
             await self.role_student_callback(update, context)
-        elif data == "back_to_menu":
-            await self.back_to_menu_callback(update, context)
+
         elif data.startswith("take_test_"):
             test_id = int(data.split("_")[2])
             await self.take_test_callback(update, context, test_id)
@@ -126,48 +125,7 @@ Quyidagi tugmalardan birini tanlang:
         else:
             await query.edit_message_text("❌ Rol o'zgartirishda xatolik yuz berdi!")
     
-    async def back_to_menu_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Asosiy menyuga qaytish"""
-        query = update.callback_query
-        user = query.from_user
-        
-        # Foydalanuvchi roli olish
-        user_role = await self.bot.user_service.get_user_role(user.id)
-        
-        if not user_role:
-            await query.edit_message_text("❌ Avval ro'yxatdan o'ting! /register")
-            return
-        
-        role_text = "👨‍🏫 O'qituvchi" if user_role == UserRole.TEACHER else "👨‍🎓 O'quvchi"
-        
-        menu_text = f"""
-🏠 Asosiy menyu
 
-👤 Foydalanuvchi: {user.first_name}
-🎭 Rol: {role_text}
-🆔 Telegram ID: {user.id}
-
-Quyidagi tugmalardan birini tanlang:
-        """
-        
-        # Inline keyboard yaratish
-        if user_role == UserRole.TEACHER:
-            keyboard = [
-                [InlineKeyboardButton("📝 Test yaratish", callback_data="create_test")],
-                [InlineKeyboardButton("📋 Mening testlarim", callback_data="my_tests")],
-                [InlineKeyboardButton("📊 Natijalar", callback_data="results")],
-                [InlineKeyboardButton("👥 O'quvchilar", callback_data="students")]
-            ]
-        else:  # STUDENT
-            keyboard = [
-                [InlineKeyboardButton("📝 Mavjud testlar", callback_data="available_tests")],
-                [InlineKeyboardButton("📊 Mening natijalarim", callback_data="my_results")],
-                [InlineKeyboardButton("🏆 Reyting", callback_data="rating")],
-                [InlineKeyboardButton("📚 O'quv materiallari", callback_data="materials")]
-            ]
-        
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(menu_text, reply_markup=reply_markup)
     
     async def take_test_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE, test_id: int):
         """Test ishlash callback"""
@@ -266,7 +224,7 @@ Quyidagi tugmalardan birini tanlang:
                 keyboard = [
                     [InlineKeyboardButton("📝 Boshqa test", callback_data="available_tests")],
                     [InlineKeyboardButton("📊 Barcha natijalar", callback_data="my_results")],
-                    [InlineKeyboardButton("🏠 Asosiy menyu", callback_data="back_to_menu")]
+    
                 ]
                 reply_markup = InlineKeyboardMarkup(keyboard)
                 
@@ -353,7 +311,7 @@ Quyidagi tugmalardan birini tanlang:
         keyboard = [
             [InlineKeyboardButton("🌍 Ommaviy testlar", callback_data="public_tests")],
             [InlineKeyboardButton("🔍 Testni qidirish", callback_data="search_test")],
-            [InlineKeyboardButton("🔙 Orqaga", callback_data="back_to_menu")]
+            
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
