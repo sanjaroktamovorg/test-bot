@@ -203,13 +203,17 @@ Quyidagi tugmalardan birini tanlang:
             await query.edit_message_text("❌ Test sessiyasi boshlanmadi!")
             return
         
+        if 'error' in test_session:
+            await query.edit_message_text(f"❌ {test_session['error']}")
+            return
+        
         # Test ma'lumotlarini context ga saqlash
         context.user_data['current_test'] = {
             'test_id': test_id,
-            'session_id': test_session.id,
+            'session_id': test_session['session_id'],
             'current_question': 0,
             'answers': {},
-            'start_time': test_session.start_time
+            'start_time': test_session['started_at']
         }
         
         # Test ma'lumotlarini ko'rsatish va boshlash
