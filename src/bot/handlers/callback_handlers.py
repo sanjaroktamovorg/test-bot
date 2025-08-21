@@ -53,6 +53,27 @@ class CallbackHandlers:
             await self.teacher_results_callback(update, context, test_id)
         elif data == "back_to_menu":
             await self.back_to_menu_callback(update, context)
+        
+        # Inline test answer callbacks
+        elif data.startswith("answer_"):
+            # Format: answer_{question_id}_{option}
+            parts = data.split("_")
+            question_id = int(parts[1])
+            option = parts[2]
+            await self.handle_inline_answer(update, context, question_id, option)
+        elif data.startswith("test_page_"):
+            # Format: test_page_{test_id}_{page}
+            parts = data.split("_")
+            test_id = int(parts[2])
+            page = int(parts[3])
+            await self.show_test_page(update, context, test_id, page)
+        elif data.startswith("finish_inline_test_"):
+            test_id = int(data.split("_")[3])
+            await self.finish_inline_test(update, context, test_id)
+        elif data.startswith("use_text_mode_"):
+            test_id = int(data.split("_")[3])
+            await self.switch_to_text_mode(update, context, test_id)
+        
         else:
             await query.edit_message_text("❌ Noma'lum callback!")
     
@@ -725,6 +746,7 @@ Asosiy menyuga o'tish uchun /menu buyrug'ini yuboring.
         test_questions = await self.bot.test_service.get_test_questions(test_id)
         questions_count = len(test_questions)
         
+        # Inline button yoki matn tanlash
         start_message = f"""
 🚀 Test boshlanmoqda!
 
@@ -732,18 +754,17 @@ Asosiy menyuga o'tish uchun /menu buyrug'ini yuboring.
 📊 Savollar soni: {questions_count}
 ⏱️ Vaqt chegarasi: {test.time_limit or "Cheklanmagan"} daqiqa
 
-💡 Javoblarni quyidagi formatda kiriting:
-• ABCDABCD... (katta harflar)
-• abcdabcd... (kichik harflar)
-• 1A2B3C4D... (raqam + katta harf)
-• 1a2b3c4d... (raqam + kichik harf)
-
-📝 Misol: abcdabcdabcd
-
-🔽 Quyida javoblaringizni kiriting:
+📱 Qaysi usulda test ishlashni xohlaysiz?
         """
         
-        await query.edit_message_text(start_message)
+        keyboard = [
+            [InlineKeyboardButton("🎯 Inline tugmalar (Tavsiya etiladi)", callback_data=f"test_page_{test_id}_1")],
+            [InlineKeyboardButton("✏️ Matn orqali (Eski usul)", callback_data=f"use_text_mode_{test_id}")],
+            [InlineKeyboardButton("🔙 Orqaga", callback_data="available_tests")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await query.edit_message_text(start_message, reply_markup=reply_markup)
     
     async def my_results_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Mening natijalarim callback"""
@@ -781,3 +802,231 @@ Asosiy menyuga o'tish uchun /menu buyrug'ini yuboring.
         
         reply_markup = KeyboardFactory.get_results_keyboard(results)
         await query.edit_message_text(text, reply_markup=reply_markup)
+    
+    # ====== INLINE TEST ANSWER HANDLERS ======
+    
+    async def show_test_page(self, update: Update, context: ContextTypes.DEFAULT_TYPE, test_id: int, page: int):
+        """Test sahifasini ko'rsatish (10 talik guruhlar)"""
+        query = update.callback_query
+        
+        # Test ma'lumotlarini olish
+        test = await self.bot.test_service.get_test_by_id(test_id)
+        if not test:
+            await query.edit_message_text("❌ Test topilmadi!")
+            return
+        
+        # Test savollarini olish
+        test_questions = await self.bot.test_service.get_test_questions(test_id)
+        questions_count = len(test_questions)
+        
+        # Sahifa parametrlarini hisoblash
+        questions_per_page = 10
+        total_pages = (questions_count + questions_per_page - 1) // questions_per_page
+        
+        if page < 1 or page > total_pages:
+            page = 1
+        
+        start_idx = (page - 1) * questions_per_page
+        end_idx = min(start_idx + questions_per_page, questions_count)
+        
+        # Context dan javoblarni olish
+        current_test = context.user_data.get('current_test', {})
+        inline_answers = current_test.get('inline_answers', {})
+        
+        # Sahifa matnini yaratish
+        message_text = f"""
+📋 Test: {test.title}
+📄 Sahifa: {page}/{total_pages} ({start_idx + 1}-{end_idx} savollar)
+
+"""
+        
+        # Savollarni ko'rsatish
+        keyboard = []
+        for i in range(start_idx, end_idx):
+            question_num = i + 1
+            message_text += f"❓ SAVOL {question_num}\n"
+            
+            # Javob tugmalarini yaratish
+            row = []
+            for option in ['A', 'B', 'C', 'D']:
+                selected = inline_answers.get(str(i), '') == option
+                button_text = f"✅{option}" if selected else option
+                callback_data = f"answer_{i}_{option}"
+                row.append(InlineKeyboardButton(button_text, callback_data=callback_data))
+            keyboard.append(row)
+            
+            message_text += "\n"
+        
+        # Navigatsiya tugmalarini qo'shish
+        nav_buttons = []
+        if page > 1:
+            nav_buttons.append(InlineKeyboardButton("⬅️ Oldingi 10 ta", callback_data=f"test_page_{test_id}_{page-1}"))
+        if page < total_pages:
+            nav_buttons.append(InlineKeyboardButton("➡️ Keyingi 10 ta", callback_data=f"test_page_{test_id}_{page+1}"))
+        
+        if nav_buttons:
+            keyboard.append(nav_buttons)
+        
+        # Boshqaruv tugmalari
+        control_buttons = []
+        answered_count = len(inline_answers)
+        if answered_count == questions_count:
+            control_buttons.append(InlineKeyboardButton("✅ Testni tugatish", callback_data=f"finish_inline_test_{test_id}"))
+        
+        control_buttons.append(InlineKeyboardButton("✏️ Matn usuli", callback_data=f"use_text_mode_{test_id}"))
+        control_buttons.append(InlineKeyboardButton("🔙 Orqaga", callback_data="available_tests"))
+        keyboard.append(control_buttons)
+        
+        # Progress barni qo'shish
+        progress_text = f"\n📊 Javob berilgan: {answered_count}/{questions_count}"
+        if answered_count > 0:
+            progress_percent = (answered_count / questions_count) * 100
+            progress_text += f" ({progress_percent:.1f}%)"
+        
+        message_text += progress_text
+        
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(message_text, reply_markup=reply_markup)
+    
+    async def handle_inline_answer(self, update: Update, context: ContextTypes.DEFAULT_TYPE, question_id: int, option: str):
+        """Inline javobni qayta ishlash"""
+        query = update.callback_query
+        
+        # Context dan test ma'lumotlarini olish
+        current_test = context.user_data.get('current_test', {})
+        if not current_test:
+            await query.answer("❌ Test sessiyasi topilmadi!")
+            return
+        
+        test_id = current_test.get('test_id')
+        if not test_id:
+            await query.answer("❌ Test ma'lumotlari topilmadi!")
+            return
+        
+        # Javobni saqlash
+        if 'inline_answers' not in current_test:
+            current_test['inline_answers'] = {}
+        
+        current_test['inline_answers'][str(question_id)] = option
+        context.user_data['current_test'] = current_test
+        
+        # Joriy sahifani aniqlash
+        questions_per_page = 10
+        current_page = (question_id // questions_per_page) + 1
+        
+        # Sahifani qayta ko'rsatish
+        await self.show_test_page(update, context, test_id, current_page)
+        
+        # Foydalanuvchiga javob berish
+        await query.answer(f"✅ {question_id + 1}-savol uchun {option} tanlandi")
+    
+    async def finish_inline_test(self, update: Update, context: ContextTypes.DEFAULT_TYPE, test_id: int):
+        """Inline testni tugatish"""
+        query = update.callback_query
+        user = query.from_user
+        
+        # Context dan test ma'lumotlarini olish
+        current_test = context.user_data.get('current_test', {})
+        inline_answers = current_test.get('inline_answers', {})
+        
+        if not inline_answers:
+            await query.answer("❌ Hech qanday javob berilmagan!")
+            return
+        
+        # Test ma'lumotlarini olish
+        test = await self.bot.test_service.get_test_by_id(test_id)
+        test_questions = await self.bot.test_service.get_test_questions(test_id)
+        questions_count = len(test_questions)
+        
+        # Barcha savollarga javob berilganligini tekshirish
+        if len(inline_answers) != questions_count:
+            missing_count = questions_count - len(inline_answers)
+            await query.answer(f"❌ {missing_count} ta savolga javob berilmagan!")
+            return
+        
+        try:
+            # Foydalanuvchi ma'lumotlarini olish
+            db_user = await self.bot.user_service.get_user_by_telegram_id(user.id)
+            
+            # Javoblarni test_taking_service formatiga o'tkazish
+            answers_dict = {}
+            for i in range(questions_count):
+                question = test_questions[i]
+                user_answer = inline_answers.get(str(i), '')
+                
+                # Javob variantlarini olish
+                question_answers = await self.bot.test_service.get_question_answers(question.id)
+                
+                # User answer (A, B, C, D) ni answer_id ga o'tkazish
+                for answer in question_answers:
+                    answer_letter = answer.answer_text.replace('Variant ', '').strip()
+                    if answer_letter.upper() == user_answer.upper():
+                        answers_dict[str(question.id)] = str(answer.id)
+                        break
+            
+            # Testni tugatish
+            result = await self.bot.test_taking_service.submit_test_answers(
+                test_id, db_user.id, answers_dict
+            )
+            
+            # Test ishlash holatini to'xtatish
+            context.user_data['taking_test'] = False
+            context.user_data['current_test'] = {}
+            
+            # Natijani ko'rsatish
+            passed = result.percentage >= (test.passing_score or 0)
+            result_emoji = "🎉" if passed else "😔"
+            result_text = "Tabriklaymiz! Testni o'tdingiz!" if passed else "Afsus! Testni o'ta olmadingiz."
+            
+            final_message = f"""
+{result_emoji} Test tugatildi!
+
+📋 Test: {test.title}
+📊 Savollar soni: {questions_count}
+✅ To'g'ri javoblar: {int(result.score)}/{int(result.max_score)}
+📈 Ball: {result.score}/{result.max_score}
+📊 Foiz: {result.percentage:.1f}%
+
+🎯 O'tish balli: {test.passing_score or 'Aniqlanmagan'}%
+{result_text}
+            """
+            
+            keyboard = [
+                [InlineKeyboardButton("📊 Batafsil natija", callback_data=f"view_result_{result.id}")],
+                [InlineKeyboardButton("📝 Boshqa test", callback_data="available_tests")],
+                [InlineKeyboardButton("🏠 Asosiy menyu", callback_data="back_to_menu")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            await query.edit_message_text(final_message, reply_markup=reply_markup)
+            
+        except Exception as e:
+            await query.edit_message_text(f"❌ Test tugatishda xatolik: {str(e)}")
+    
+    async def switch_to_text_mode(self, update: Update, context: ContextTypes.DEFAULT_TYPE, test_id: int):
+        """Matn usulga o'tish"""
+        query = update.callback_query
+        
+        # Test ma'lumotlarini olish
+        test = await self.bot.test_service.get_test_by_id(test_id)
+        test_questions = await self.bot.test_service.get_test_questions(test_id)
+        questions_count = len(test_questions)
+        
+        text_message = f"""
+✏️ Matn usuli tanlandi!
+
+📋 Test: {test.title}
+📊 Savollar soni: {questions_count}
+
+💡 Javoblarni quyidagi formatda kiriting:
+• ABCDABCD... (katta harflar)
+• abcdabcd... (kichik harflar)
+• 1A2B3C4D... (raqam + katta harf)
+• 1a2b3c4d... (raqam + kichik harf)
+
+📝 Misol: abcdabcdabcd
+
+🔽 Quyida javoblaringizni kiriting:
+        """
+        
+        await query.edit_message_text(text_message)

@@ -1,5 +1,44 @@
 # Test Bot - Changelog
 
+## [v0.9.34] - 2025-01-27
+
+### 🎯 Inline Button Test Javoblari Tizimi
+- **Inline button orqali javob tanlash** - A, B, C, D variantlari tugmalar orqali
+- **Sahifalash tizimi** - 10 talik guruhlar bo'lib savollarni ko'rsatish
+- **Tanlangan javoblar belgilanadi** - ✅ belgi bilan vizual ko'rsatish
+- **Eski usulni saqlash** - Matn orqali javob berish ham mumkin
+- **Foydalanuvchi tanlovi** - Qaysi usulni ishlatishni o'zi hal qiladi
+
+### 📱 Yangi Inline Funksiyalar
+- **show_test_page()** - Sahifalash bilan test ko'rsatish
+- **handle_inline_answer()** - Inline javoblarni qayta ishlash
+- **finish_inline_test()** - Inline test tugatish
+- **switch_to_text_mode()** - Matn usuliga o'tish
+- **Progress bar** - Real-time javob berilgan savollar ko'rsatkichi
+
+### 🎮 Foydalanuvchi Tajribasi
+- **2 xil test usuli** - Inline tugmalar yoki matn orqali
+- **Navigatsiya tugmalari** - "Keyingi 10 ta" va "Oldingi 10 ta"
+- **Vizual feedback** - Tanlangan javoblar darhol ko'rinadi
+- **Progressni kuzatish** - Nechta savolga javob berilgani ko'rsatiladi
+- **Testni tugatish** - Barcha javoblar berilgandan so'ng tugma faollashadi
+
+### 🔧 Texnik Yangiliklar
+- **Callback handlerlar** - Yangi inline callback funksiyalar
+- **Context ma'lumotlari** - inline_answers saqlash tizimi
+- **Answer mapping** - A,B,C,D dan answer_id ga o'tkazish
+- **Error handling** - To'liq xatoliklar boshqaruvi
+- **Backward compatibility** - Eski matn usuli saqlanib qoldi
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- Inline button test tizimi ishlayapti ✅
+- Sahifalash tizimi ishlayapti ✅
+- Eski matn usuli saqlanib qoldi ✅
+- Progress tracking ishlayapti ✅
+
+---
+
 ## [v0.9.33] - 2025-01-27
 
 ### ✅ Reyting bo'limi to'liq ishlab chiqildi
