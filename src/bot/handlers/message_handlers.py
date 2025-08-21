@@ -543,7 +543,7 @@ class MessageHandlers:
                         total_score += question.points
             
             # Foizni hisoblash
-            percentage = (total_score / max_score) * 100 if max_score > 0 else 0
+            percentage = (correct_answers / questions_count) * 100 if questions_count > 0 else 0
             
             # Natijani saqlash
             current_test = context.user_data.get('current_test', {})
