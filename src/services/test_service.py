@@ -38,7 +38,7 @@ class TestService:
         session = self.db.get_session()
         try:
             return session.query(Test).filter(
-                Test.status == TestStatus.ACTIVE,
+                Test.status == TestStatus.ACTIVE.value,
                 Test.category == TestCategory.PUBLIC.value
             ).all()
         finally:
@@ -50,7 +50,7 @@ class TestService:
         try:
             return session.query(Test).filter(
                 Test.test_code == test_code,
-                Test.status == TestStatus.ACTIVE
+                Test.status == TestStatus.ACTIVE.value
             ).first()
         finally:
             self.db.close_session(session)

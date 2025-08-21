@@ -29,11 +29,11 @@ class UserService:
             session.commit()
             session.refresh(new_user)
             
-            # Foydalanuvchi sozlamalarini yaratish
+            # Foydalanuvchi sozlamalarini yaratish - User jadvalidagi rol bilan sinxronlash
             user_settings = UserSettings(
                 user_id=new_user.id,
                 telegram_id=telegram_id,
-                role=UserRole.STUDENT.value
+                role=new_user.role.value  # User jadvalidagi rol bilan bir xil
             )
             
             session.add(user_settings)
@@ -55,6 +55,14 @@ class UserService:
         finally:
             self.db.close_session(session)
     
+    async def get_user_by_id(self, user_id: int) -> User:
+        """ID bo'yicha foydalanuvchini olish"""
+        session = self.db.get_session()
+        try:
+            return session.query(User).filter(User.id == user_id).first()
+        finally:
+            self.db.close_session(session)
+    
     async def get_user_settings(self, telegram_id: int) -> UserSettings:
         """Foydalanuvchi sozlamalarini olish"""
         session = self.db.get_session()
@@ -64,16 +72,31 @@ class UserService:
             self.db.close_session(session)
     
     async def update_user_role(self, telegram_id: int, role: UserRole) -> bool:
-        """Foydalanuvchi roli o'zgartirish - har bir akkaunt uchun alohida"""
+        """Foydalanuvchi roli o'zgartirish - har ikki jadvalda ham yangilash"""
         session = self.db.get_session()
         try:
+            # User jadvalini yangilash
+            user = session.query(User).filter(User.telegram_id == telegram_id).first()
+            if not user:
+                return False
+            
+            user.role = role
+            
             # UserSettings ni yangilash
             user_settings = session.query(UserSettings).filter(UserSettings.telegram_id == telegram_id).first()
             if user_settings:
                 user_settings.role = role.value
-                session.commit()
-                return True
-            return False
+            else:
+                # Agar UserSettings mavjud bo'lmasa, yaratish
+                user_settings = UserSettings(
+                    user_id=user.id,
+                    telegram_id=telegram_id,
+                    role=role.value
+                )
+                session.add(user_settings)
+            
+            session.commit()
+            return True
         except Exception as e:
             session.rollback()
             raise e
@@ -81,12 +104,19 @@ class UserService:
             self.db.close_session(session)
     
     async def get_user_role(self, telegram_id: int) -> UserRole:
-        """Foydalanuvchi roli olish - har bir akkaunt uchun alohida"""
+        """Foydalanuvchi roli olish - User jadvalidan asosiy manba sifatida"""
         session = self.db.get_session()
         try:
+            # Avval User jadvalidan tekshirish (asosiy manba)
+            user = session.query(User).filter(User.telegram_id == telegram_id).first()
+            if user and user.role:
+                return user.role
+            
+            # Agar User jadvalida topilmasa, UserSettings dan tekshirish
             user_settings = session.query(UserSettings).filter(UserSettings.telegram_id == telegram_id).first()
             if user_settings:
                 return UserRole(user_settings.role)
+            
             return UserRole.STUDENT  # Default
         finally:
             self.db.close_session(session)
@@ -122,5 +152,59 @@ class UserService:
         except Exception as e:
             session.rollback()
             raise e
+        finally:
+            self.db.close_session(session)
+    
+    async def sync_user_roles(self) -> dict:
+        """User va UserSettings jadvallaridagi rollarni sinxronlashtirish"""
+        session = self.db.get_session()
+        try:
+            # Barcha foydalanuvchilarni olish
+            users = session.query(User).all()
+            synced_count = 0
+            errors = []
+            
+            for user in users:
+                try:
+                    # UserSettings ni topish yoki yaratish
+                    user_settings = session.query(UserSettings).filter(
+                        UserSettings.telegram_id == user.telegram_id
+                    ).first()
+                    
+                    if user_settings:
+                        # Agar UserSettings mavjud bo'lsa, User jadvalidagi rol bilan yangilash
+                        if user_settings.role != user.role.value:
+                            user_settings.role = user.role.value
+                            synced_count += 1
+                    else:
+                        # Agar UserSettings mavjud bo'lmasa, yaratish
+                        user_settings = UserSettings(
+                            user_id=user.id,
+                            telegram_id=user.telegram_id,
+                            role=user.role.value
+                        )
+                        session.add(user_settings)
+                        synced_count += 1
+                        
+                except Exception as e:
+                    errors.append(f"User ID {user.id}: {str(e)}")
+            
+            session.commit()
+            return {
+                "success": True,
+                "synced_count": synced_count,
+                "total_users": len(users),
+                "errors": errors
+            }
+            
+        except Exception as e:
+            session.rollback()
+            return {
+                "success": False,
+                "error": str(e),
+                "synced_count": 0,
+                "total_users": 0,
+                "errors": []
+            }
         finally:
             self.db.close_session(session)

@@ -14,7 +14,7 @@ class TestTakingService:
         try:
             test = session.query(Test).filter(
                 Test.id == test_id,
-                Test.status == TestStatus.ACTIVE
+                Test.status == TestStatus.ACTIVE.value
             ).first()
             
             if not test:
@@ -63,7 +63,7 @@ class TestTakingService:
             # Test mavjudligini tekshirish
             test = session.query(Test).filter(
                 Test.id == test_id,
-                Test.status == TestStatus.ACTIVE
+                Test.status == TestStatus.ACTIVE.value
             ).first()
             
             if not test:

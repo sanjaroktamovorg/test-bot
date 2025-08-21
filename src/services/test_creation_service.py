@@ -44,27 +44,41 @@ class TestCreationService:
             self.db.close_session(session)
     
     async def parse_abcd_format(self, text: str) -> list:
-        """ABCD formatini parse qilish"""
-        lines = text.strip().split('\n')
+        """ABCD formatini parse qilish - abcd, ABCD, 1a2b3c4d formatlarini qo'llab-quvvatlash"""
+        text = text.strip().replace(' ', '').replace('\n', '')
         questions = []
         
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue
-            
-            # ABCD formatini tekshirish (abcdabcd... yoki 1a2b3c4d...)
-            if len(line) >= 4:
-                # Har bir belgi A, B, C yoki D bo'lishi kerak
-                valid_chars = {'a', 'b', 'c', 'd', 'A', 'B', 'C', 'D'}
-                if all(char in valid_chars for char in line):
-                    # ABCD formatini parse qilish
-                    for i, answer in enumerate(line):
-                        if answer.upper() in ['A', 'B', 'C', 'D']:
-                            questions.append({
-                                'question_number': i + 1,
-                                'correct_answer': answer.upper()
-                            })
+        # Format 1: abcdabcd... yoki ABCDABCD...
+        if all(char.lower() in 'abcd' for char in text):
+            for i, answer in enumerate(text):
+                questions.append({
+                    'question_number': i + 1,
+                    'correct_answer': answer.upper()
+                })
+        
+        # Format 2: 1a2b3c4d5a... (raqam + harf)
+        elif any(char.isdigit() for char in text):
+            current_number = ""
+            for char in text:
+                if char.isdigit():
+                    current_number = char
+                elif char.lower() in 'abcd' and current_number:
+                    questions.append({
+                        'question_number': int(current_number),
+                        'correct_answer': char.upper()
+                    })
+                    current_number = ""
+        
+        # Format 3: Har qatordan alohida (har qatorda bitta javob)
+        else:
+            lines = text.split('\n') if '\n' in text else [text]
+            for i, line in enumerate(lines):
+                line = line.strip().replace(' ', '')
+                if line and line[0].lower() in 'abcd':
+                    questions.append({
+                        'question_number': i + 1,
+                        'correct_answer': line[0].upper()
+                    })
         
         return questions
     

@@ -71,9 +71,13 @@ class MessageHandlers:
         
         text = "📝 Mavjud testlar:\n\n"
         for i, test in enumerate(tests, 1):
+            # Teacher ma'lumotlarini alohida olish
+            teacher = await self.bot.user_service.get_user_by_id(test.teacher_id)
+            teacher_name = teacher.first_name if teacher else "Noma'lum"
+            
             text += f"{i}. 📋 {test.title}\n"
-            text += f"   👨‍🏫 {test.teacher.first_name}\n"
-            text += f"   📊 {test.passing_score}% o'tish balli\n\n"
+            text += f"   👨‍🏫 {teacher_name}\n"
+            text += f"   📊 {test.passing_score or 'Belgilanmagan'}% o'tish balli\n\n"
         
         reply_markup = KeyboardFactory.get_test_keyboard(tests)
         await update.message.reply_text(text, reply_markup=reply_markup)
@@ -87,20 +91,24 @@ class MessageHandlers:
             await update.message.reply_text("❌ Bu funksiya faqat o'qituvchilar uchun!")
             return
         
+        # Foydalanuvchi ma'lumotlarini olish
         db_user = await self.bot.user_service.get_user_by_telegram_id(user.id)
+        if not db_user:
+            await update.message.reply_text("❌ Foydalanuvchi topilmadi!")
+            return
+        
+        # Testlarni olish - teacher_id bo'yicha
         tests = await self.bot.test_service.get_teacher_tests(db_user.id)
+        
+
         
         if not tests:
             await update.message.reply_text("📝 Sizda hali testlar yo'q. Yangi test yarating!")
             return
         
-        text = "📋 Mening testlarim:\n\n"
-        for i, test in enumerate(tests, 1):
-            text += f"{i}. 📝 {test.title}\n"
-            text += f"   📊 Holat: {test.status.value}\n"
-            text += f"   📂 Toifa: {test.category}\n\n"
+        text = "📋 Mening testlarim:\n\nKerakli testni tanlang va batafsil ma'lumotlarni ko'ring:"
         
-        reply_markup = KeyboardFactory.get_test_keyboard(tests)
+        reply_markup = KeyboardFactory.get_teacher_tests_keyboard(tests)
         await update.message.reply_text(text, reply_markup=reply_markup)
     
     async def results_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -132,7 +140,11 @@ class MessageHandlers:
         
         text = "📊 Mening natijalarim:\n\n"
         for result in results:
-            text += f"📝 {result.test.title}\n"
+            # Test ma'lumotlarini alohida olish
+            test = await self.bot.test_service.get_test_by_id(result.test_id)
+            test_title = test.title if test else "Noma'lum test"
+            
+            text += f"📝 {test_title}\n"
             text += f"📊 Ball: {result.score}/{result.max_score}\n"
             text += f"📈 Foiz: {result.percentage:.1f}%\n\n"
         
@@ -278,17 +290,18 @@ class MessageHandlers:
         await update.message.reply_text(
             f"📝 Test nomi: {text}\n\n"
             f"Endi savollar va javoblarni ABCD formatida kiriting:\n\n"
-            f"📋 Formatlar:\n"
-            f"• abcdabcdabcd... (100 tagacha)\n"
-            f"• 1a2b3c4d5a... (raqamli format)\n\n"
-            f"📝 Misol:\n"
+            f"📋 Qo'llab-quvvatlanadigan formatlar:\n"
+            f"• ABCDABCD... (katta harflar)\n"
+            f"• abcdabcd... (kichik harflar)\n"
+            f"• 1A2B3C4D... (raqam + katta harf)\n"
+            f"• 1a2b3c4d... (raqam + kichik harf)\n\n"
+            f"📝 Misollar:\n"
+            f"ABCDABCDABCD\n"
             f"abcdabcdabcd\n"
-            f"yoki\n"
+            f"1A2B3C4D5A6B7C8D\n"
             f"1a2b3c4d5a6b7c8d\n\n"
-            f"💡 A = 1-savol to'g'ri javobi\n"
-            f"💡 B = 2-savol to'g'ri javobi\n"
-            f"💡 C = 3-savol to'g'ri javobi\n"
-            f"💡 D = 4-savol to'g'ri javobi",
+            f"💡 Har bir harf bitta savolning to'g'ri javobini bildiradi\n"
+            f"💡 100 tagacha savol kiritish mumkin",
             reply_markup=KeyboardFactory.get_back_keyboard()
         )
         context.user_data['test_creation_step'] = 'enter_abcd_answers'
@@ -313,15 +326,20 @@ class MessageHandlers:
             success = await self.bot.test_creation_service.create_test_with_abcd_answers(test.id, text)
             
             if success:
-                # Savollar sonini hisoblash
-                questions_count = len(text.replace('\n', '').replace(' ', ''))
+                # Testni faollashtirish
+                await self.bot.test_creation_service.activate_test(test.id)
+                
+                # Savollar sonini hisoblash - yaratilgan testdan olish
+                test_questions = await self.bot.test_service.get_test_questions(test.id)
+                questions_count = len(test_questions)
                 
                 await update.message.reply_text(
-                    f"✅ Test muvaffaqiyatli yaratildi!\n\n"
+                    f"✅ Test muvaffaqiyatli yaratildi va faollashtirildi!\n\n"
                     f"📝 Nomi: {test.title}\n"
                     f"📊 Savollar soni: {questions_count}\n"
                     f"📂 Toifa: {test.category}\n"
-                    f"🆔 Test ID: {test.id}\n\n"
+                    f"🆔 Test ID: {test.id}\n"
+                    f"📊 Holat: ✅ Faol\n\n"
                     f"📋 Test \"Mening testlarim\" bo'limida ko'rinadi!",
                     reply_markup=KeyboardFactory.get_main_keyboard(UserRole.TEACHER)
                 )
