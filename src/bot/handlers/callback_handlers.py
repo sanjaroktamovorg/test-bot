@@ -52,6 +52,8 @@ class CallbackHandlers:
         elif data.startswith("view_test_results_"):
             test_id = int(data.split("_")[3])
             await self.teacher_results_callback(update, context, test_id)
+        elif data == "back_to_menu":
+            await self.back_to_menu_callback(update, context)
         else:
             await query.edit_message_text("❌ Noma'lum callback!")
     
@@ -267,6 +269,26 @@ class CallbackHandlers:
         except Exception as e:
             print(f"PDF yaratishda xatolik: {str(e)}")
             return None
+    
+    async def back_to_menu_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Asosiy menyuga qaytish"""
+        query = update.callback_query
+        user = query.from_user
+        
+        # Foydalanuvchi roli tekshirish
+        user_role = await self.bot.user_service.get_user_role(user.id)
+        
+        menu_text = f"""
+🏠 Asosiy menyu
+
+👤 Foydalanuvchi: {user.first_name}
+🎭 Rol: {'👨‍🏫 O\'qituvchi' if user_role == UserRole.TEACHER else '👨‍🎓 O\'quvchi'}
+
+Quyidagi tugmalardan birini tanlang:
+        """
+        
+        reply_markup = KeyboardFactory.get_main_keyboard(user_role)
+        await query.edit_message_text(menu_text, reply_markup=reply_markup)
     
     async def register_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Ro'yxatdan o'tish callback"""

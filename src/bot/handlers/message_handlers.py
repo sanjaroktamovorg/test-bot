@@ -201,7 +201,37 @@ class MessageHandlers:
             await update.message.reply_text("❌ Bu funksiya faqat o'qituvchilar uchun!")
             return
         
-        await update.message.reply_text("📊 Test natijalari funksiyasi ishlab chiqilmoqda...")
+        # Foydalanuvchi ma'lumotlarini olish
+        db_user = await self.bot.user_service.get_user_by_telegram_id(user.id)
+        if not db_user:
+            await update.message.reply_text("❌ Foydalanuvchi topilmadi!")
+            return
+        
+        # O'qituvchining testlarini olish
+        tests = await self.bot.test_service.get_teacher_tests(db_user.id)
+        
+        if not tests:
+            await update.message.reply_text("📝 Sizda hali testlar yo'q. Yangi test yarating!")
+            return
+        
+        text = "📊 Test natijalari:\n\nQaysi testning natijalarini ko'rmoqchisiz?"
+        
+        # Testlar ro'yxatini yaratish
+        keyboard = []
+        for test in tests:
+            # Har bir test uchun natijalar sonini olish
+            results = await self.bot.test_service.get_test_results(test.id)
+            results_count = len(results)
+            
+            keyboard.append([InlineKeyboardButton(
+                f"📝 {test.title} ({results_count} natija)", 
+                callback_data=f"view_test_results_{test.id}"
+            )])
+        
+        keyboard.append([InlineKeyboardButton("🔙 Orqaga", callback_data="back_to_menu")])
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await update.message.reply_text(text, reply_markup=reply_markup)
     
     async def my_results_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Mening natijalarim - faqat o'quvchilar uchun"""
