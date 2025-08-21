@@ -1,5 +1,45 @@
 # Test Bot - Changelog
 
+## [v0.9.35] - 2025-01-27
+
+### 🔐 Shaxsiy Test Tizimi va Qidiruv Yangilanishi
+- **Shaxsiy test uchun maxsus raqam** - 6 xonali raqam + 2 ta harf formatida
+- **Test ulashish havolasi** - Maxsus URL yaratish va ko'rsatish
+- **Test nomi unique validatsiyasi** - Bir o'qituvchi uchun unique nom talabi
+- **Xatolik xabarlari** - Nom takrorlanishida aniq xabar berish
+
+### 🔍 Qidiruv Tizimi Yangilanishi
+- **Shaxsiy testlar** - Faqat maxsus raqam orqali topish mumkin
+- **Ommaviy testlar** - Nom bo'yicha qidirish va sahifalash
+- **10 talik sahifalash** - Ko'p natijalarda navigatsiya
+- **Navigatsiya tugmalari** - "Oldingi" va "Keyingi" sahifalar
+
+### 📊 Yangi Funksiyalar
+- **check_test_title_unique()** - Test nomi unique tekshirish
+- **generate_test_code()** - Maxsus test kodi yaratish
+- **search_public_tests_by_title()** - Ommaviy testlar qidirish
+- **count_public_tests_by_title()** - Qidiruv natijalari soni
+- **_show_single_test_result()** - Bitta test ko'rsatish
+- **_search_public_tests_by_title()** - Sahifalash bilan qidirish
+
+### 🎯 Foydalanuvchi Tajribasi
+- **Test yaratishda xatoliklar** - Nom takrorlanishida qayta kiritish
+- **Qidiruv natijalari** - Sahifa ma'lumotlari va navigatsiya
+- **Test ma'lumotlari** - Shaxsiy test uchun maxsus ma'lumotlar
+- **Ulashish imkoniyati** - Maxsus havola orqali test ulashish
+
+### 📱 Interfeys
+- **Sahifalash ko'rsatkichlari** - Sahifa raqami va natijalar soni
+- **Navigatsiya tugmalari** - Oson sahifalar orasida o'tish
+- **Test boshlash tugmalari** - To'g'ridan-to'g'ri test boshlash
+- **Qayta qidirish** - Yangi qidiruv boshlash imkoniyati
+
+### 🔧 Texnik Yangilanishlar
+- **Database validatsiya** - Unique constraint tekshirish
+- **Error handling** - Xatoliklar to'g'ri qayta ishlash
+- **Callback handlers** - Yangi sahifa navigatsiyasi
+- **Service methods** - Yangi qidiruv va validatsiya metodlari
+
 ## [v0.9.34] - 2025-01-27
 
 ### 🎯 Inline Button Test Javoblari Tizimi

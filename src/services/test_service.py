@@ -396,3 +396,60 @@ class TestService:
             }
         finally:
             self.db.close_session(session)
+    
+    async def check_test_title_unique(self, title: str, teacher_id: int) -> bool:
+        """Test nomi unique ekanligini tekshirish (bir o'qituvchi uchun)"""
+        session = self.db.get_session()
+        try:
+            existing_test = session.query(Test).filter(
+                Test.title == title,
+                Test.teacher_id == teacher_id
+            ).first()
+            return existing_test is None
+        finally:
+            self.db.close_session(session)
+    
+    async def generate_test_code(self) -> str:
+        """Maxsus test kodi yaratish"""
+        import random
+        import string
+        
+        # 6 xonali raqam + 2 ta harf
+        numbers = ''.join(random.choices(string.digits, k=6))
+        letters = ''.join(random.choices(string.ascii_uppercase, k=2))
+        test_code = f"{numbers}{letters}"
+        
+        # Kod unique ekanligini tekshirish
+        session = self.db.get_session()
+        try:
+            existing_code = session.query(Test).filter(Test.test_code == test_code).first()
+            if existing_code:
+                # Agar kod mavjud bo'lsa, yangi kod yaratish
+                return await self.generate_test_code()
+            return test_code
+        finally:
+            self.db.close_session(session)
+    
+    async def search_public_tests_by_title(self, title: str, limit: int = 10, offset: int = 0) -> list[Test]:
+        """Ommaviy testlarni nom bo'yicha qidirish (sahifalash bilan)"""
+        session = self.db.get_session()
+        try:
+            return session.query(Test).filter(
+                Test.title.ilike(f"%{title}%"),
+                Test.status == TestStatus.ACTIVE.value,
+                Test.category == TestCategory.PUBLIC.value
+            ).offset(offset).limit(limit).all()
+        finally:
+            self.db.close_session(session)
+    
+    async def count_public_tests_by_title(self, title: str) -> int:
+        """Ommaviy testlar sonini hisoblash (nom bo'yicha)"""
+        session = self.db.get_session()
+        try:
+            return session.query(Test).filter(
+                Test.title.ilike(f"%{title}%"),
+                Test.status == TestStatus.ACTIVE.value,
+                Test.category == TestCategory.PUBLIC.value
+            ).count()
+        finally:
+            self.db.close_session(session)

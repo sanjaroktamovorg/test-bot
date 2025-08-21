@@ -803,6 +803,77 @@ Asosiy menyuga o'tish uchun /menu buyrug'ini yuboring.
         reply_markup = KeyboardFactory.get_results_keyboard(results)
         await query.edit_message_text(text, reply_markup=reply_markup)
     
+    async def search_page_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE, title: str, page: int):
+        """Test qidirish sahifasi navigatsiyasi"""
+        query = update.callback_query
+        
+        try:
+            # Testlarni olish
+            limit = 10
+            offset = (page - 1) * limit
+            tests = await self.bot.test_service.search_public_tests_by_title(title, limit, offset)
+            total_count = await self.bot.test_service.count_public_tests_by_title(title)
+            
+            if not tests:
+                await query.edit_message_text("❌ Testlar topilmadi!")
+                return
+            
+            # Sahifa ma'lumotlari
+            total_pages = (total_count + limit - 1) // limit
+            start_idx = offset + 1
+            end_idx = min(offset + len(tests), total_count)
+            
+            # Testlar ro'yxatini yaratish
+            tests_text = f"""
+🔍 Ommaviy testlar qidiruv natijasi: "{title}"
+
+📊 Topilgan testlar: {total_count} ta
+📄 Sahifa: {page}/{total_pages} ({start_idx}-{end_idx})
+
+"""
+            
+            for i, test in enumerate(tests, start_idx):
+                teacher = await self.bot.user_service.get_user_by_id(test.teacher_id)
+                teacher_name = teacher.first_name if teacher else "Noma'lum"
+                
+                tests_text += f"""
+{i}. 📝 {test.title}
+👨‍🏫 O'qituvchi: {teacher_name}
+⏱️ Vaqt: {test.time_limit or "Cheklanmagan"} daqiqa
+🎯 O'tish balli: {test.passing_score or "Aniqlanmagan"}%
+🆔 ID: {test.id}
+
+"""
+            
+            # Navigatsiya tugmalari
+            keyboard = []
+            
+            # Test boshlash tugmalari (faqat birinchi 5 ta test uchun)
+            for i, test in enumerate(tests[:5]):
+                keyboard.append([InlineKeyboardButton(f"📝 {test.title[:20]}...", callback_data=f"take_test_{test.id}")])
+            
+            # Navigatsiya tugmalari
+            nav_buttons = []
+            if page > 1:
+                nav_buttons.append(InlineKeyboardButton("⬅️ Oldingi", callback_data=f"search_page_{title}_{page-1}"))
+            if page < total_pages:
+                nav_buttons.append(InlineKeyboardButton("➡️ Keyingi", callback_data=f"search_page_{title}_{page+1}"))
+            
+            if nav_buttons:
+                keyboard.append(nav_buttons)
+            
+            # Boshqaruv tugmalari
+            keyboard.append([
+                InlineKeyboardButton("🔍 Boshqa qidirish", callback_data="search_test"),
+                InlineKeyboardButton("🔙 Orqaga", callback_data="available_tests")
+            ])
+            
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await query.edit_message_text(tests_text, reply_markup=reply_markup)
+            
+        except Exception as e:
+            await query.edit_message_text(f"❌ Xatolik: {str(e)}")
+    
     # ====== INLINE TEST ANSWER HANDLERS ======
     
     async def show_test_page(self, update: Update, context: ContextTypes.DEFAULT_TYPE, test_id: int, page: int):

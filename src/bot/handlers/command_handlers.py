@@ -108,19 +108,19 @@ Quyidagi tugmalardan birini tanlang:
     
     async def version_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Versiya komandasi"""
-                version_text = """
+        version_text = """
 🤖 Test Bot - Versiya ma'lumotlari
 
-📋 Versiya: v0.9.34
+📋 Versiya: v0.9.35
 📅 Yangilangan: 2025-01-27
 👨‍💻 Developer: Test Bot Team
 
 🆕 So'nggi o'zgarishlar:
-• 🎯 Inline button orqali test javoblarini tanlash
-• 📄 10 talik sahifalash tizimi
-• ✅ Tanlangan javoblar vizual belgilanadi
-• 🔄 Eski matn usuli ham saqlanib qoldi
-• 📊 Progress bar va real-time javob ko'rsatkichi
+• 🔐 Shaxsiy test uchun maxsus raqam va ulashish havolasi
+• 🔍 Test nomi unique validatsiyasi (bir o'qituvchi uchun unique)
+• 📄 Ommaviy testlar qidiruvida sahifalash (10 talik guruhlar)
+• 🔒 Shaxsiy testlar faqat maxsus raqam orqali topiladi
+• 📊 Qidiruv natijalarida navigatsiya tugmalari
 
 🔧 Texnik ma'lumotlar:
 • Python 3.10+

@@ -697,14 +697,27 @@ class MessageHandlers:
                 test_questions = await self.bot.test_service.get_test_questions(test.id)
                 questions_count = len(test_questions)
                 
+                # Test ma'lumotlarini tayyorlash
+                test_info = f"✅ Test muvaffaqiyatli yaratildi va faollashtirildi!\n\n"
+                test_info += f"📝 Nomi: {test.title}\n"
+                test_info += f"📊 Savollar soni: {questions_count}\n"
+                test_info += f"📂 Toifa: {test.category}\n"
+                test_info += f"🆔 Test ID: {test.id}\n"
+                test_info += f"📊 Holat: ✅ Faol\n\n"
+                
+                # Shaxsiy test uchun maxsus ma'lumotlar
+                if test.category == "private":
+                    test_info += f"🔐 Shaxsiy test ma'lumotlari:\n"
+                    test_info += f"🔢 Maxsus raqam: {test.test_code}\n"
+                    test_info += f"🔗 Ulashish havolasi: https://t.me/your_bot_username?start=test_{test.test_code}\n\n"
+                    test_info += f"💡 O'quvchilar testni faqat maxsus raqam orqali topa oladi!\n"
+                else:
+                    test_info += f"🌍 Ommaviy test - barcha o'quvchilar ko'ra oladi!\n"
+                
+                test_info += f"\n📋 Test \"Mening testlarim\" bo'limida ko'rinadi!"
+                
                 await update.message.reply_text(
-                    f"✅ Test muvaffaqiyatli yaratildi va faollashtirildi!\n\n"
-                    f"📝 Nomi: {test.title}\n"
-                    f"📊 Savollar soni: {questions_count}\n"
-                    f"📂 Toifa: {test.category}\n"
-                    f"🆔 Test ID: {test.id}\n"
-                    f"📊 Holat: ✅ Faol\n\n"
-                    f"📋 Test \"Mening testlarim\" bo'limida ko'rinadi!",
+                    test_info,
                     reply_markup=KeyboardFactory.get_main_keyboard(UserRole.TEACHER)
                 )
                 
@@ -717,11 +730,26 @@ class MessageHandlers:
                     reply_markup=KeyboardFactory.get_back_keyboard()
                 )
                 
+        except ValueError as e:
+            # Test nomi takrorlanishi xatoligi
+            if "allaqachon mavjud" in str(e):
+                await update.message.reply_text(
+                    f"❌ {str(e)}\n\n"
+                    f"📝 Iltimos, boshqa nom kiriting:",
+                    reply_markup=KeyboardFactory.get_back_keyboard()
+                )
+                context.user_data['test_creation_step'] = 'enter_title'
+            else:
+                await update.message.reply_text(
+                    f"❌ Xatolik: {str(e)}\n\n"
+                    f"Iltimos, ABCD formatini to'g'ri kiriting!",
+                    reply_markup=KeyboardFactory.get_back_keyboard()
+                )
         except Exception as e:
             await update.message.reply_text(
                 f"❌ Xatolik: {str(e)}\n\n"
                 f"Iltimos, ABCD formatini to'g'ri kiriting!",
-                                reply_markup=KeyboardFactory.get_back_keyboard()
+                reply_markup=KeyboardFactory.get_back_keyboard()
             )
     
     async def _handle_test_answers(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
@@ -956,42 +984,13 @@ class MessageHandlers:
         
         # Test qidirish
         try:
-            # Avval test kodini tekshirish
+            # Avval test kodini tekshirish (shaxsiy testlar uchun)
             test = await self.bot.test_service.get_test_by_code(text)
             
-            if not test:
-                # Test nomi bo'yicha qidirish
-                test = await self.bot.test_service.search_test_by_title(text)
-            
             if test:
-                # Test topildi
+                # Shaxsiy test topildi
                 if test.status == "active":
-                    # Test ma'lumotlarini ko'rsatish
-                    teacher = await self.bot.user_service.get_user_by_id(test.teacher_id)
-                    teacher_name = teacher.first_name if teacher else "Noma'lum"
-                    
-                    test_info = f"""
-🔍 Test topildi!
-
-📝 Nomi: {test.title}
-📄 Tavsif: {test.description or "Tavsif yo'q"}
-👨‍🏫 O'qituvchi: {teacher_name}
-📂 Toifa: {'🌍 Ommaviy' if test.category == 'public' else '🔒 Shaxsiy'}
-⏱️ Vaqt chegarasi: {test.time_limit or "Cheklanmagan"} daqiqa
-🎯 O'tish balli: {test.passing_score or "Aniqlanmagan"}%
-🆔 Test kodi: {test.test_code or "Yo'q"}
-                    """
-                    
-                    keyboard = [
-                        [InlineKeyboardButton("📝 Testni boshlash", callback_data=f"take_test_{test.id}")],
-                        [InlineKeyboardButton("🔍 Boshqa test qidirish", callback_data="search_test")],
-                        [InlineKeyboardButton("🔙 Orqaga", callback_data="available_tests")]
-                    ]
-                    reply_markup = InlineKeyboardMarkup(keyboard)
-                    
-                    await update.message.reply_text(test_info, reply_markup=reply_markup)
-                    
-                    # Qidirish holatini to'xtatish
+                    await self._show_single_test_result(update, context, test)
                     context.user_data['searching_test'] = False
                 else:
                     user_role = await self.bot.user_service.get_user_role(user.id)
@@ -1000,12 +999,15 @@ class MessageHandlers:
                         reply_markup=KeyboardFactory.get_back_keyboard(user_role)
                     )
             else:
-                user_role = await self.bot.user_service.get_user_role(user.id)
-                await update.message.reply_text(
-                    f"❌ \"{text}\" nomli yoki kodli test topilmadi!\n\n"
-                    f"🔍 Qayta urinib ko'ring yoki boshqa test qidiring.",
-                    reply_markup=KeyboardFactory.get_back_keyboard(user_role)
-                )
+                # Ommaviy testlarni nom bo'yicha qidirish
+                await self._search_public_tests_by_title(update, context, text)
+                
+        except Exception as e:
+            user_role = await self.bot.user_service.get_user_role(user.id)
+            await update.message.reply_text(
+                f"❌ Qidirishda xatolik yuz berdi: {str(e)}",
+                reply_markup=KeyboardFactory.get_back_keyboard(user_role)
+            )
                 
         except Exception as e:
             user_role = await self.bot.user_service.get_user_role(user.id)
@@ -1397,3 +1399,107 @@ Qaysi ma'lumotni tahrirlashni xohlaysiz?
         reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
         
         await update.message.reply_text(position_text, reply_markup=reply_markup)
+    
+    async def _show_single_test_result(self, update: Update, context: ContextTypes.DEFAULT_TYPE, test):
+        """Bitta test natijasini ko'rsatish"""
+        teacher = await self.bot.user_service.get_user_by_id(test.teacher_id)
+        teacher_name = teacher.first_name if teacher else "Noma'lum"
+        
+        test_info = f"""
+🔍 Test topildi!
+
+📝 Nomi: {test.title}
+📄 Tavsif: {test.description or "Tavsif yo'q"}
+👨‍🏫 O'qituvchi: {teacher_name}
+📂 Toifa: {'🌍 Ommaviy' if test.category == 'public' else '🔒 Shaxsiy'}
+⏱️ Vaqt chegarasi: {test.time_limit or "Cheklanmagan"} daqiqa
+🎯 O'tish balli: {test.passing_score or "Aniqlanmagan"}%
+🆔 Test kodi: {test.test_code or "Yo'q"}
+        """
+        
+        keyboard = [
+            [InlineKeyboardButton("📝 Testni boshlash", callback_data=f"take_test_{test.id}")],
+            [InlineKeyboardButton("🔍 Boshqa test qidirish", callback_data="search_test")],
+            [InlineKeyboardButton("🔙 Orqaga", callback_data="available_tests")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await update.message.reply_text(test_info, reply_markup=reply_markup)
+    
+    async def _search_public_tests_by_title(self, update: Update, context: ContextTypes.DEFAULT_TYPE, title: str, page: int = 1):
+        """Ommaviy testlarni nom bo'yicha qidirish (sahifalash bilan)"""
+        try:
+            # Testlarni olish
+            limit = 10
+            offset = (page - 1) * limit
+            tests = await self.bot.test_service.search_public_tests_by_title(title, limit, offset)
+            total_count = await self.bot.test_service.count_public_tests_by_title(title)
+            
+            if not tests:
+                user_role = await self.bot.user_service.get_user_role(update.effective_user.id)
+                await update.message.reply_text(
+                    f"❌ \"{title}\" nomli ommaviy test topilmadi!\n\n"
+                    f"🔍 Qayta urinib ko'ring yoki boshqa test qidiring.",
+                    reply_markup=KeyboardFactory.get_back_keyboard(user_role)
+                )
+                return
+            
+            # Sahifa ma'lumotlari
+            total_pages = (total_count + limit - 1) // limit
+            start_idx = offset + 1
+            end_idx = min(offset + len(tests), total_count)
+            
+            # Testlar ro'yxatini yaratish
+            tests_text = f"""
+🔍 Ommaviy testlar qidiruv natijasi: "{title}"
+
+📊 Topilgan testlar: {total_count} ta
+📄 Sahifa: {page}/{total_pages} ({start_idx}-{end_idx})
+
+"""
+            
+            for i, test in enumerate(tests, start_idx):
+                teacher = await self.bot.user_service.get_user_by_id(test.teacher_id)
+                teacher_name = teacher.first_name if teacher else "Noma'lum"
+                
+                tests_text += f"""
+{i}. 📝 {test.title}
+👨‍🏫 O'qituvchi: {teacher_name}
+⏱️ Vaqt: {test.time_limit or "Cheklanmagan"} daqiqa
+🎯 O'tish balli: {test.passing_score or "Aniqlanmagan"}%
+🆔 ID: {test.id}
+
+"""
+            
+            # Navigatsiya tugmalari
+            keyboard = []
+            
+            # Test boshlash tugmalari (faqat birinchi 5 ta test uchun)
+            for i, test in enumerate(tests[:5]):
+                keyboard.append([InlineKeyboardButton(f"📝 {test.title[:20]}...", callback_data=f"take_test_{test.id}")])
+            
+            # Navigatsiya tugmalari
+            nav_buttons = []
+            if page > 1:
+                nav_buttons.append(InlineKeyboardButton("⬅️ Oldingi", callback_data=f"search_page_{title}_{page-1}"))
+            if page < total_pages:
+                nav_buttons.append(InlineKeyboardButton("➡️ Keyingi", callback_data=f"search_page_{title}_{page+1}"))
+            
+            if nav_buttons:
+                keyboard.append(nav_buttons)
+            
+            # Boshqaruv tugmalari
+            keyboard.append([
+                InlineKeyboardButton("🔍 Boshqa qidirish", callback_data="search_test"),
+                InlineKeyboardButton("🔙 Orqaga", callback_data="available_tests")
+            ])
+            
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await update.message.reply_text(tests_text, reply_markup=reply_markup)
+            
+        except Exception as e:
+            user_role = await self.bot.user_service.get_user_role(update.effective_user.id)
+            await update.message.reply_text(
+                f"❌ Qidirishda xatolik: {str(e)}",
+                reply_markup=KeyboardFactory.get_back_keyboard(user_role)
+            )

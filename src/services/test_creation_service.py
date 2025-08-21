@@ -16,21 +16,29 @@ class TestCreationService:
         """Oddiy test yaratish - soddalashtirilgan"""
         session = self.db.get_session()
         try:
+            # Test nomi unique ekanligini tekshirish
+            from src.services.test_service import TestService
+            test_service = TestService(self.db)
+            is_unique = await test_service.check_test_title_unique(data['title'], teacher_id)
+            
+            if not is_unique:
+                raise ValueError(f"'{data['title']}' nomli test allaqachon mavjud! Boshqa nom kiriting.")
+            
             new_test = Test(
                 title=data['title'],
                 description=data.get('description', ''),
                 teacher_id=teacher_id,
-                test_type=TestType.SIMPLE.value,  # .value qo'shildi
-                category=data.get('category', TestCategory.PUBLIC.value),  # .value qo'shildi
+                test_type=TestType.SIMPLE.value,
+                category=data.get('category', TestCategory.PUBLIC.value),
                 subject=data.get('subject', ''),
                 time_limit=data.get('time_limit', 30),
                 passing_score=data.get('passing_score', 60.0),
-                status=TestStatus.DRAFT.value  # .value qo'shildi
+                status=TestStatus.DRAFT.value
             )
             
             # Shaxsiy test uchun maxsus kod yaratish
-            if data.get('category') == TestCategory.PRIVATE.value:  # .value qo'shildi
-                new_test.test_code = self.generate_test_code()
+            if data.get('category') == TestCategory.PRIVATE.value:
+                new_test.test_code = await test_service.generate_test_code()
             
             session.add(new_test)
             session.commit()
