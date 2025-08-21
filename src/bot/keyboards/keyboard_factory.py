@@ -16,7 +16,7 @@ class KeyboardFactory:
         else:  # STUDENT
             keyboard = [
                 [KeyboardButton("📝 Mavjud testlar"), KeyboardButton("📊 Mening natijalarim")],
-                [KeyboardButton("🏆 Reyting"), KeyboardButton("📚 O'quv materiallari")],
+                [KeyboardButton("🏆 Reyting")],
                 [KeyboardButton("❓ Yordam"), KeyboardButton("⚙️ Sozlamalar")]
             ]
         

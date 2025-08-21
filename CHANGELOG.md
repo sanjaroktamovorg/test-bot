@@ -1,5 +1,30 @@
 # Test Bot - Changelog
 
+## [v0.9.29] - 2025-01-27
+
+### ✅ Database schemasi yangilandi va xatoliklar tuzatildi
+- **Database yangilandi** - user_settings jadvaliga yangi ustunlar qo'shildi
+- **Sozlamalar tugmasi tuzatildi** - endi to'liq ishlaydi
+- **O'quvchilar menyusi** - "O'quv materiallari" tugmasi olib tashlandi
+- **Profil funksiyalari** - to'liq test qilindi va ishlaydi
+
+### 🔧 Database o'zgarishlari
+- **user_settings jadvaliga qo'shildi:**
+  - profile_photo (TEXT)
+  - full_name (TEXT)
+  - age (INTEGER)
+  - about (TEXT)
+  - experience (INTEGER)
+  - specialization (TEXT)
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- Database yangilangan ✅
+- Sozlamalar tugmasi ishlaydi ✅
+- O'quvchilar menyusi soddalashtirildi ✅
+
+---
+
 ## [v0.9.28] - 2025-01-27
 
 ### ✅ Profil ma'lumotlari to'liq funksional qilindi
