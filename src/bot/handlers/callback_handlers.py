@@ -278,11 +278,14 @@ class CallbackHandlers:
         # Foydalanuvchi roli tekshirish
         user_role = await self.bot.user_service.get_user_role(user.id)
         
+        # Rol nomini alohida aniqlash
+        role_name = '👨‍🏫 O\'qituvchi' if user_role == UserRole.TEACHER else '👨‍🎓 O\'quvchi'
+        
         menu_text = f"""
 🏠 Asosiy menyu
 
 👤 Foydalanuvchi: {user.first_name}
-🎭 Rol: {'👨‍🏫 O\'qituvchi' if user_role == UserRole.TEACHER else '👨‍🎓 O\'quvchi'}
+🎭 Rol: {role_name}
 
 Quyidagi tugmalardan birini tanlang:
         """
