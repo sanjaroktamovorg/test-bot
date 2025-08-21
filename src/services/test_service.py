@@ -217,3 +217,63 @@ class TestService:
             return session.query(TestResult).filter(TestResult.test_id == test_id).all()
         finally:
             self.db.close_session(session)
+    
+    # Statistika metodlari
+    async def get_teacher_tests_count(self, teacher_id: int) -> int:
+        """O'qituvchining testlar sonini olish"""
+        session = self.db.get_session()
+        try:
+            return session.query(Test).filter(Test.teacher_id == teacher_id).count()
+        finally:
+            self.db.close_session(session)
+    
+    async def get_teacher_active_tests_count(self, teacher_id: int) -> int:
+        """O'qituvchining faol testlar sonini olish"""
+        session = self.db.get_session()
+        try:
+            return session.query(Test).filter(
+                Test.teacher_id == teacher_id,
+                Test.status == TestStatus.ACTIVE.value
+            ).count()
+        finally:
+            self.db.close_session(session)
+    
+    async def get_teacher_total_results(self, teacher_id: int) -> int:
+        """O'qituvchining barcha test natijalari sonini olish"""
+        session = self.db.get_session()
+        try:
+            # O'qituvchining testlari ID larini olish
+            teacher_test_ids = session.query(Test.id).filter(Test.teacher_id == teacher_id).subquery()
+            # Bu testlardagi barcha natijalar sonini hisoblash
+            return session.query(TestResult).filter(TestResult.test_id.in_(teacher_test_ids)).count()
+        finally:
+            self.db.close_session(session)
+    
+    async def get_student_completed_tests_count(self, student_id: int) -> int:
+        """O'quvchining bajargan testlar sonini olish"""
+        session = self.db.get_session()
+        try:
+            return session.query(TestResult).filter(TestResult.student_id == student_id).count()
+        finally:
+            self.db.close_session(session)
+    
+    async def get_student_average_score(self, student_id: int) -> float:
+        """O'quvchining o'rtacha ballini olish"""
+        session = self.db.get_session()
+        try:
+            results = session.query(TestResult).filter(TestResult.student_id == student_id).all()
+            if not results:
+                return 0.0
+            total_percentage = sum(result.percentage for result in results)
+            return total_percentage / len(results)
+        finally:
+            self.db.close_session(session)
+    
+    async def get_student_best_score(self, student_id: int) -> float:
+        """O'quvchining eng yaxshi natijasini olish"""
+        session = self.db.get_session()
+        try:
+            result = session.query(TestResult).filter(TestResult.student_id == student_id).order_by(TestResult.percentage.desc()).first()
+            return result.percentage if result else 0.0
+        finally:
+            self.db.close_session(session)

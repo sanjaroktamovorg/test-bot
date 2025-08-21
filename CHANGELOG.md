@@ -1,5 +1,31 @@
 # Test Bot - Changelog
 
+## [v0.9.27] - 2025-01-27
+
+### ✅ Profil tugmasi tuzatildi va asosiy menyu soddalashtirildi
+- **Profil tugmasi olib tashlandi** - Asosiy menyudan profil tugmasi olib tashlandi
+- **Sozlamalar ichida qoldirildi** - Profil faqat sozlamalar bo'limida
+- **TestService statistika metodlari** - Yo'q bo'lgan metodlar qo'shildi
+- **Xatoliklar tuzatildi** - Profil funksiyalari to'liq ishlaydi
+
+### 🔧 Texnik o'zgarishlar
+- **KeyboardFactory yangilandi** - Asosiy menyudan profil tugmasi olib tashlandi
+- **TestService to'ldirildi** - Statistika metodlari qo'shildi:
+  - get_teacher_tests_count
+  - get_teacher_active_tests_count  
+  - get_teacher_total_results
+  - get_student_completed_tests_count
+  - get_student_average_score
+  - get_student_best_score
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- Profil funksiyasi ishlayapti ✅
+- Asosiy menyu soddalashtirildi ✅
+- Barcha statistikalar ishlayapti ✅
+
+---
+
 ## [v0.9.26] - 2025-01-27
 
 ### ✅ Profil tugmasi ishlaydigan qilindi

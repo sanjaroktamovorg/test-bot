@@ -11,15 +11,13 @@ class KeyboardFactory:
             keyboard = [
                 [KeyboardButton("📝 Test yaratish"), KeyboardButton("📋 Mening testlarim")],
                 [KeyboardButton("📊 Natijalar"), KeyboardButton("👥 O'quvchilar")],
-                [KeyboardButton("👤 Profil"), KeyboardButton("❓ Yordam")],
-                [KeyboardButton("⚙️ Sozlamalar")]
+                [KeyboardButton("❓ Yordam"), KeyboardButton("⚙️ Sozlamalar")]
             ]
         else:  # STUDENT
             keyboard = [
                 [KeyboardButton("📝 Mavjud testlar"), KeyboardButton("📊 Mening natijalarim")],
                 [KeyboardButton("🏆 Reyting"), KeyboardButton("📚 O'quv materiallari")],
-                [KeyboardButton("👤 Profil"), KeyboardButton("❓ Yordam")],
-                [KeyboardButton("⚙️ Sozlamalar")]
+                [KeyboardButton("❓ Yordam"), KeyboardButton("⚙️ Sozlamalar")]
             ]
         
         return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=False)
