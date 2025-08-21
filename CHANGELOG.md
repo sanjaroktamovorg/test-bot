@@ -1,5 +1,30 @@
 # Test Bot - Changelog
 
+## [v0.9.31] - 2025-01-27
+
+### ✅ Asosiy menular soddalashtirildi
+- **O'quvchilar menyusi** - Faqat kerakli tugmalar qoldirildi
+- **O'qituvchilar menyusi** - Minimal va samimiy interfeys
+- **Ortiqcha tugmalar** - "Yordam" va "O'quvchilar" olib tashlandi
+- **Foydalanuvchi tajribasi** - Yaxshilangan va optimallashtirilgan
+
+### 🔧 Yangi menyu tuzilishi
+- **O'quvchilar:**
+  - 📝 Mavjud testlar | 📊 Mening natijalarim
+  - 🏆 Reyting | ⚙️ Sozlamalar
+
+- **O'qituvchilar:**
+  - 📝 Test yaratish | 📋 Mening testlarim
+  - 📊 Natijalar | ⚙️ Sozlamalar
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- Menular soddalashtirildi ✅
+- Foydalanuvchi tajribasi yaxshilandi ✅
+- Interfeys optimallashtirildi ✅
+
+---
+
 ## [v0.9.30] - 2025-01-27
 
 ### ✅ Profil rasmini qabul qilish va ko'rsatish funksiyasi qo'shildi

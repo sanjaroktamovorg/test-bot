@@ -10,14 +10,12 @@ class KeyboardFactory:
         if user_role == UserRole.TEACHER:
             keyboard = [
                 [KeyboardButton("📝 Test yaratish"), KeyboardButton("📋 Mening testlarim")],
-                [KeyboardButton("📊 Natijalar"), KeyboardButton("👥 O'quvchilar")],
-                [KeyboardButton("❓ Yordam"), KeyboardButton("⚙️ Sozlamalar")]
+                [KeyboardButton("📊 Natijalar"), KeyboardButton("⚙️ Sozlamalar")]
             ]
         else:  # STUDENT
             keyboard = [
                 [KeyboardButton("📝 Mavjud testlar"), KeyboardButton("📊 Mening natijalarim")],
-                [KeyboardButton("🏆 Reyting")],
-                [KeyboardButton("❓ Yordam"), KeyboardButton("⚙️ Sozlamalar")]
+                [KeyboardButton("🏆 Reyting"), KeyboardButton("⚙️ Sozlamalar")]
             ]
         
         return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=False)
