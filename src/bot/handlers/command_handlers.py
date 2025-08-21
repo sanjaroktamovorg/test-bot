@@ -17,8 +17,16 @@ class CommandHandlers:
         db_user = await self.bot.user_service.get_user_by_telegram_id(user.id)
         
         if not db_user:
-            # Ro'yxatdan o'tmagan foydalanuvchi
-            welcome_text = f"""
+            # Ro'yxatdan o'tmagan foydalanuvchi - avtomatik ro'yxatdan o'tkazish
+            db_user = await self.bot.user_service.register_user(
+                telegram_id=user.id,
+                username=user.username,
+                first_name=user.first_name,
+                last_name=user.last_name
+            )
+            
+            if db_user:
+                welcome_text = f"""
 🎓 Test Bot ga xush kelibsiz, {user.first_name}!
 
 Bu bot orqali:
@@ -26,15 +34,20 @@ Bu bot orqali:
 📊 O'quvchilar testlarni ishlashi
 📈 Natijalarni ko'rish mumkin
 
-Boshlash uchun ro'yxatdan o'ting.
-            """
-            
-            keyboard = [
-                [InlineKeyboardButton("📝 Ro'yxatdan o'tish", callback_data="register")]
-            ]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            
-            await update.message.reply_text(welcome_text, reply_markup=reply_markup)
+⚠️ **Muhim:** Rolingizni tanlaganingizdan so'ng uni o'zgartirib bo'lmaydi!
+
+Iltimos, rolingizni tanlang:
+                """
+                
+                keyboard = [
+                    [InlineKeyboardButton("👨‍🏫 O'qituvchi", callback_data="role_teacher")],
+                    [InlineKeyboardButton("👨‍🎓 O'quvchi", callback_data="role_student")]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                
+                await update.message.reply_text(welcome_text, reply_markup=reply_markup, parse_mode='Markdown')
+            else:
+                await update.message.reply_text("❌ Ro'yxatdan o'tishda xatolik yuz berdi!")
         else:
             # Ro'yxatdan o'tgan foydalanuvchi - to'g'ridan-to'g'ri dashboard
             await self.menu_command(update, context)
@@ -49,7 +62,6 @@ Boshlash uchun ro'yxatdan o'ting.
 👤 Umumiy:
 /start - Botni ishga tushirish
 /help - Yordam
-/register - Ro'yxatdan o'tish
 /menu - Asosiy menyu
 
 👨‍🏫 O'qituvchilar uchun:
@@ -65,31 +77,7 @@ Boshlash uchun ro'yxatdan o'ting.
         """
         await update.message.reply_text(help_text)
     
-    async def register_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Ro'yxatdan o'tish"""
-        user = update.effective_user
-        
-        # Foydalanuvchini database ga saqlash
-        db_user = await self.bot.user_service.register_user(
-            telegram_id=user.id,
-            username=user.username,
-            first_name=user.first_name,
-            last_name=user.last_name
-        )
-        
-        if db_user:
-            keyboard = [
-                [InlineKeyboardButton("👨‍🏫 O'qituvchi", callback_data="role_teacher")],
-                [InlineKeyboardButton("👨‍🎓 O'quvchi", callback_data="role_student")]
-            ]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            
-            await update.message.reply_text(
-                "✅ Ro'yxatdan o'tdingiz! Iltimos, rolingizni tanlang:",
-                reply_markup=reply_markup
-            )
-        else:
-            await update.message.reply_text("❌ Ro'yxatdan o'tishda xatolik yuz berdi!")
+
     
     async def menu_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Asosiy menyu - har bir foydalanuvchi uchun alohida"""

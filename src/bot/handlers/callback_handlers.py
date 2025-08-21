@@ -17,9 +17,7 @@ class CallbackHandlers:
         
         data = query.data
         
-        if data == "register":
-            await self.register_callback(update, context)
-        elif data == "role_teacher":
+        if data == "role_teacher":
             await self.role_teacher_callback(update, context)
         elif data == "role_student":
             await self.role_student_callback(update, context)
@@ -293,20 +291,30 @@ Quyidagi tugmalardan birini tanlang:
         reply_markup = KeyboardFactory.get_main_keyboard(user_role)
         await query.edit_message_text(menu_text, reply_markup=reply_markup)
     
-    async def register_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Ro'yxatdan o'tish callback"""
+    async def change_role_confirm_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Rol o'zgartirishni tasdiqlash"""
         query = update.callback_query
         user = query.from_user
         
-        # Foydalanuvchini database ga saqlash
-        db_user = await self.bot.user_service.register_user(
-            telegram_id=user.id,
-            username=user.username,
-            first_name=user.first_name,
-            last_name=user.last_name
-        )
-        
-        if db_user:
+        try:
+            # Foydalanuvchi ma'lumotlarini olish
+            db_user = await self.bot.user_service.get_user_by_telegram_id(user.id)
+            if not db_user:
+                await query.edit_message_text("❌ Foydalanuvchi topilmadi!")
+                return
+            
+            # Barcha ma'lumotlarni o'chirish
+            await self.bot.user_service.delete_user_data(db_user.id)
+            
+            # Foydalanuvchini qayta yaratish
+            await self.bot.user_service.register_user(
+                telegram_id=user.id,
+                username=user.username,
+                first_name=user.first_name,
+                last_name=user.last_name
+            )
+            
+            # Rol tanlash menyusini ko'rsatish
             keyboard = [
                 [InlineKeyboardButton("👨‍🏫 O'qituvchi", callback_data="role_teacher")],
                 [InlineKeyboardButton("👨‍🎓 O'quvchi", callback_data="role_student")]
@@ -314,11 +322,35 @@ Quyidagi tugmalardan birini tanlang:
             reply_markup = InlineKeyboardMarkup(keyboard)
             
             await query.edit_message_text(
-                "✅ Ro'yxatdan o'tdingiz! Iltimos, rolingizni tanlang:",
+                "✅ Barcha ma'lumotlar o'chirildi!\n\nIltimos, yangi rolingizni tanlang:",
                 reply_markup=reply_markup
             )
-        else:
-            await query.edit_message_text("❌ Ro'yxatdan o'tishda xatolik yuz berdi!")
+            
+        except Exception as e:
+            await query.edit_message_text(f"❌ Xatolik yuz berdi: {str(e)}")
+    
+    async def change_role_cancel_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Rol o'zgartirishni bekor qilish"""
+        query = update.callback_query
+        user = query.from_user
+        
+        # Foydalanuvchi roli tekshirish
+        user_role = await self.bot.user_service.get_user_role(user.id)
+        
+        menu_text = f"""
+🏠 Asosiy menyu
+
+👤 Foydalanuvchi: {user.first_name}
+🎭 Rol: {'👨‍🏫 O\'qituvchi' if user_role == UserRole.TEACHER else '👨‍🎓 O\'quvchi'}
+
+Rol o'zgartirish bekor qilindi.
+Quyidagi tugmalardan birini tanlang:
+        """
+        
+        reply_markup = KeyboardFactory.get_main_keyboard(user_role)
+        await query.edit_message_text(menu_text, reply_markup=reply_markup)
+    
+
     
     async def role_teacher_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """O'qituvchi roli tanlash - to'g'ridan-to'g'ri dashboard"""

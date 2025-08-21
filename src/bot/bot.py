@@ -38,7 +38,6 @@ class TestBot:
         # Asosiy komandalar
         self.application.add_handler(CommandHandler("start", self.command_handlers.start_command))
         self.application.add_handler(CommandHandler("help", self.command_handlers.help_command))
-        self.application.add_handler(CommandHandler("register", self.command_handlers.register_command))
         self.application.add_handler(CommandHandler("menu", self.command_handlers.menu_command))
         
         # O'qituvchi komandalari
