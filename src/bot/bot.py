@@ -55,6 +55,9 @@ class TestBot:
         
         # Xabar handerlari
         self.application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.message_handlers.handle_message))
+        
+        # Rasm handerlari
+        self.application.add_handler(MessageHandler(filters.PHOTO, self.message_handlers.handle_photo))
     
     def run(self):
         """Botni ishga tushirish"""

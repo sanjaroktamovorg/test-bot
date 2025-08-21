@@ -1,5 +1,27 @@
 # Test Bot - Changelog
 
+## [v0.9.30] - 2025-01-27
+
+### ✅ Profil rasmini qabul qilish va ko'rsatish funksiyasi qo'shildi
+- **Rasm qabul qilish** - Profil rasmini yuklash va saqlash
+- **Profil ko'rishda rasm** - Saqlangan rasm profil ko'rishda ko'rsatiladi
+- **Yordamchi hisobotlar** - Barcha profil maydonlari uchun ma'lumot
+- **Xatoliklar tuzatildi** - Rasm qabul qilishda xatoliklar bartaraf etildi
+
+### 🔧 Yangi funksiyalar
+- **handle_photo()** - Rasm qabul qilish va saqlash
+- **Profil ko'rishda rasm** - reply_photo() bilan rasm ko'rsatish
+- **Yordamchi hisobotlar** - Har bir maydon uchun ma'lumot
+- **Rasm validatsiyasi** - Rasm mavjudligini tekshirish
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- Profil rasmi qabul qilinadi ✅
+- Profil ko'rishda rasm ko'rsatiladi ✅
+- Yordamchi hisobotlar ishlaydi ✅
+
+---
+
 ## [v0.9.29] - 2025-01-27
 
 ### ✅ Database schemasi yangilandi va xatoliklar tuzatildi

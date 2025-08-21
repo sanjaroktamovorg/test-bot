@@ -67,6 +67,49 @@ class MessageHandlers:
         else:
             await update.message.reply_text("❓ Tushunarsiz xabar. /help komandasi bilan yordam oling.")
     
+    async def handle_photo(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Rasm qabul qilish"""
+        user = update.effective_user
+        
+        # Profil tahrirlash holatida bo'lsa
+        if context.user_data.get('editing_profile') and context.user_data.get('edit_field') == "📷 Profil rasmi":
+            try:
+                # Rasmni olish
+                photo = update.message.photo[-1]  # Eng yuqori sifatli rasm
+                file = await context.bot.get_file(photo.file_id)
+                
+                # Rasm URL ni saqlash
+                photo_url = file.file_path
+                
+                # Bazaga saqlash
+                success = await self.bot.user_service.update_profile_field(user.id, "profile_photo", photo_url)
+                
+                if success:
+                    await update.message.reply_text(
+                        "✅ Profil rasmi muvaffaqiyatli qabul qilindi va saqlandi!\n\n"
+                        "📷 Rasm endi profil ko'rishda ko'rsatiladi.",
+                        reply_markup=ReplyKeyboardMarkup([[KeyboardButton("🔙 Orqaga")]], resize_keyboard=True)
+                    )
+                else:
+                    await update.message.reply_text(
+                        "❌ Profil rasmini saqlashda xatolik yuz berdi!\n\n"
+                        "Iltimos, qayta urinib ko'ring.",
+                        reply_markup=ReplyKeyboardMarkup([[KeyboardButton("🔙 Orqaga")]], resize_keyboard=True)
+                    )
+                
+                # Profil tahrirlash holatini to'xtatish
+                context.user_data['editing_profile'] = False
+                context.user_data['edit_field'] = None
+                
+            except Exception as e:
+                await update.message.reply_text(
+                    f"❌ Rasmni qabul qilishda xatolik: {str(e)}\n\n"
+                    "Iltimos, qayta urinib ko'ring.",
+                    reply_markup=ReplyKeyboardMarkup([[KeyboardButton("🔙 Orqaga")]], resize_keyboard=True)
+                )
+        else:
+            await update.message.reply_text("📷 Bu rasm qabul qilinmadi. Profil rasmini yuklash uchun '✏️ Profil tahrirlash' tugmasini bosing.")
+    
     async def create_test_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Test yaratish komandasi - faqat o'qituvchilar uchun"""
         user = update.effective_user
@@ -321,6 +364,10 @@ class MessageHandlers:
             total_results = await self.bot.test_service.get_teacher_total_results(db_user.id)
             active_tests = await self.bot.test_service.get_teacher_active_tests_count(db_user.id)
             
+            # Profil rasmi mavjudligini tekshirish
+            profile_photo = profile_data.get('profile_photo')
+            photo_text = "📷 Profil rasmi: Mavjud" if profile_photo else "📷 Profil rasmi: Kiritilmagan"
+            
             profile_text = f"""
 👤 O'qituvchi Profili
 
@@ -331,6 +378,7 @@ class MessageHandlers:
 📅 Ro'yxatdan o'tgan: {db_user.created_at.strftime('%d.%m.%Y')}
 
 📷 Profil ma'lumotlari:
+{photo_text}
 👨‍🏫 To'liq ism: {profile_data.get('full_name', 'Kiritilmagan')}
 🎂 Yosh: {profile_data.get('age', 'Kiritilmagan')} yosh
 📝 Haqida: {profile_data.get('about', 'Kiritilmagan')}
@@ -352,6 +400,10 @@ class MessageHandlers:
             average_score = await self.bot.test_service.get_student_average_score(db_user.id)
             best_score = await self.bot.test_service.get_student_best_score(db_user.id)
             
+            # Profil rasmi mavjudligini tekshirish
+            profile_photo = profile_data.get('profile_photo')
+            photo_text = "📷 Profil rasmi: Mavjud" if profile_photo else "📷 Profil rasmi: Kiritilmagan"
+            
             profile_text = f"""
 👤 O'quvchi Profili
 
@@ -362,6 +414,7 @@ class MessageHandlers:
 📅 Ro'yxatdan o'tgan: {db_user.created_at.strftime('%d.%m.%Y')}
 
 📷 Profil ma'lumotlari:
+{photo_text}
 👨‍🎓 To'liq ism: {profile_data.get('full_name', 'Kiritilmagan')}
 🎂 Yosh: {profile_data.get('age', 'Kiritilmagan')} yosh
 
@@ -382,7 +435,20 @@ class MessageHandlers:
         ]
         reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
         
-        await update.message.reply_text(profile_text, reply_markup=reply_markup)
+        # Agar profil rasmi mavjud bo'lsa, uni ham yuborish
+        profile_photo = profile_data.get('profile_photo')
+        if profile_photo:
+            try:
+                await update.message.reply_photo(
+                    photo=profile_photo,
+                    caption=profile_text,
+                    reply_markup=reply_markup
+                )
+            except Exception as e:
+                # Agar rasm yuklanishda xatolik bo'lsa, faqat matn yuborish
+                await update.message.reply_text(profile_text, reply_markup=reply_markup)
+        else:
+            await update.message.reply_text(profile_text, reply_markup=reply_markup)
     
     async def detailed_stats_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Batafsil statistika - har bir foydalanuvchi uchun alohida"""
@@ -1080,11 +1146,11 @@ Qaysi ma'lumotni tahrirlashni xohlaysiz?
                 # Ma'lumotlarni bazaga saqlash
                 success = await self.bot.user_service.update_profile_field(user.id, db_field, text)
                 if success:
-                    success_message = f"✅ {field_type} muvaffaqiyatli yangilandi!\n\n📝 Yangi qiymat: {text}"
+                    success_message = f"✅ {field_type} muvaffaqiyatli yangilandi!\n\n📝 Yangi qiymat: {text}\n\n💡 Endi profil ko'rishda bu ma'lumot ko'rsatiladi."
                 else:
-                    success_message = f"❌ {field_type} yangilashda xatolik yuz berdi!"
+                    success_message = f"❌ {field_type} yangilashda xatolik yuz berdi!\n\nIltimos, qayta urinib ko'ring."
             else:
-                success_message = f"✅ {field_type} muvaffaqiyatli yangilandi!\n\n📝 Yangi qiymat: {text}"
+                success_message = f"✅ {field_type} muvaffaqiyatli yangilandi!\n\n📝 Yangi qiymat: {text}\n\n💡 Endi profil ko'rishda bu ma'lumot ko'rsatiladi."
             
             # Profil tahrirlash holatini to'xtatish
             context.user_data['editing_profile'] = False
