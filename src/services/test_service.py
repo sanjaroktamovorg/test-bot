@@ -277,3 +277,122 @@ class TestService:
             return result.percentage if result else 0.0
         finally:
             self.db.close_session(session)
+    
+    # Reyting metodlari
+    async def get_top_students_by_average_score(self, limit: int = 10) -> list:
+        """O'rtacha ball bo'yicha eng yaxshi o'quvchilar"""
+        session = self.db.get_session()
+        try:
+            # Har bir o'quvchining o'rtacha ballini hisoblash
+            from sqlalchemy import func
+            
+            subquery = session.query(
+                TestResult.student_id,
+                func.avg(TestResult.percentage).label('avg_score'),
+                func.count(TestResult.id).label('tests_count')
+            ).group_by(TestResult.student_id).having(
+                func.count(TestResult.id) >= 1  # Kamida 1 ta test bajargan
+            ).subquery()
+            
+            # O'rtacha ball bo'yicha saralash
+            results = session.query(
+                subquery.c.student_id,
+                subquery.c.avg_score,
+                subquery.c.tests_count
+            ).order_by(subquery.c.avg_score.desc()).limit(limit).all()
+            
+            return results
+        finally:
+            self.db.close_session(session)
+    
+    async def get_top_students_by_best_score(self, limit: int = 10) -> list:
+        """Eng yaxshi natija bo'yicha top o'quvchilar"""
+        session = self.db.get_session()
+        try:
+            # Har bir o'quvchining eng yaxshi natijasini olish
+            from sqlalchemy import func
+            
+            subquery = session.query(
+                TestResult.student_id,
+                func.max(TestResult.percentage).label('best_score'),
+                func.count(TestResult.id).label('tests_count')
+            ).group_by(TestResult.student_id).having(
+                func.count(TestResult.id) >= 1  # Kamida 1 ta test bajargan
+            ).subquery()
+            
+            # Eng yaxshi natija bo'yicha saralash
+            results = session.query(
+                subquery.c.student_id,
+                subquery.c.best_score,
+                subquery.c.tests_count
+            ).order_by(subquery.c.best_score.desc()).limit(limit).all()
+            
+            return results
+        finally:
+            self.db.close_session(session)
+    
+    async def get_top_students_by_tests_count(self, limit: int = 10) -> list:
+        """Testlar soni bo'yicha eng faol o'quvchilar"""
+        session = self.db.get_session()
+        try:
+            # Har bir o'quvchining testlar sonini hisoblash
+            from sqlalchemy import func
+            
+            results = session.query(
+                TestResult.student_id,
+                func.count(TestResult.id).label('tests_count'),
+                func.avg(TestResult.percentage).label('avg_score')
+            ).group_by(TestResult.student_id).order_by(
+                func.count(TestResult.id).desc()
+            ).limit(limit).all()
+            
+            return results
+        finally:
+            self.db.close_session(session)
+    
+    async def get_student_ranking_position(self, student_id: int) -> dict:
+        """O'quvchining reytingdagi o'rnini olish"""
+        session = self.db.get_session()
+        try:
+            # O'quvchining o'rtacha ballini hisoblash
+            from sqlalchemy import func
+            
+            student_avg = session.query(
+                func.avg(TestResult.percentage).label('avg_score')
+            ).filter(TestResult.student_id == student_id).scalar()
+            
+            if not student_avg:
+                return {
+                    'position': None,
+                    'total_students': 0,
+                    'avg_score': 0.0,
+                    'tests_count': 0
+                }
+            
+            # Barcha o'quvchilar o'rtacha ballini hisoblash
+            all_students_avg = session.query(
+                TestResult.student_id,
+                func.avg(TestResult.percentage).label('avg_score')
+            ).group_by(TestResult.student_id).subquery()
+            
+            # O'quvchining o'rnini hisoblash
+            position = session.query(all_students_avg).filter(
+                all_students_avg.c.avg_score > student_avg
+            ).count() + 1
+            
+            # Jami o'quvchilar soni
+            total_students = session.query(all_students_avg).count()
+            
+            # O'quvchining testlar soni
+            tests_count = session.query(TestResult).filter(
+                TestResult.student_id == student_id
+            ).count()
+            
+            return {
+                'position': position,
+                'total_students': total_students,
+                'avg_score': float(student_avg),
+                'tests_count': tests_count
+            }
+        finally:
+            self.db.close_session(session)

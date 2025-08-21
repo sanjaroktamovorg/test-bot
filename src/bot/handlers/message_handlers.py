@@ -44,6 +44,16 @@ class MessageHandlers:
             await self.settings_command(update, context)
         elif text == "👤 Profil":
             await self.profile_command(update, context)
+        elif text == "🏆 Reyting":
+            await self.rating_command(update, context)
+        elif text == "🥇 O'rtacha ball bo'yicha":
+            await self.show_rating_by_average_score(update, context)
+        elif text == "🏆 Eng yaxshi natija":
+            await self.show_rating_by_best_score(update, context)
+        elif text == "📊 Eng faol o'quvchilar":
+            await self.show_rating_by_tests_count(update, context)
+        elif text == "👤 Mening o'rnim":
+            await self.show_my_ranking_position(update, context)
         elif text == "📊 Batafsil statistika":
             await self.detailed_stats_command(update, context)
         elif text == "✏️ Profil tahrirlash":
@@ -1171,3 +1181,219 @@ Qaysi ma'lumotni tahrirlashni xohlaysiz?
                 f"❌ Ma'lumotlarni saqlashda xatolik: {str(e)}\n\nQayta urinib ko'ring:",
                 reply_markup=ReplyKeyboardMarkup([[KeyboardButton("🔙 Orqaga")]], resize_keyboard=True)
             )
+    
+    async def rating_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Reyting - faqat o'quvchilar uchun"""
+        user = update.effective_user
+        user_role = await self.bot.user_service.get_user_role(user.id)
+        
+        if user_role != UserRole.STUDENT:
+            await update.message.reply_text("❌ Bu funksiya faqat o'quvchilar uchun!")
+            return
+        
+        # O'quvchining ma'lumotlarini olish
+        db_user = await self.bot.user_service.get_user_by_telegram_id(user.id)
+        if not db_user:
+            await update.message.reply_text("❌ Foydalanuvchi topilmadi!")
+            return
+        
+        # O'quvchining reytingdagi o'rnini olish
+        ranking = await self.bot.test_service.get_student_ranking_position(db_user.id)
+        
+        # Reyting menyusini ko'rsatish
+        rating_text = f"""
+🏆 O'quvchilar Reytingi
+
+👤 Sizning ma'lumotlaringiz:
+📊 O'rtacha ball: {ranking['avg_score']:.1f}%
+📝 Bajarilgan testlar: {ranking['tests_count']} ta
+
+"""
+        
+        if ranking['position']:
+            rating_text += f"🏅 Reytingdagi o'rin: {ranking['position']}/{ranking['total_students']}\n\n"
+        else:
+            rating_text += "📊 Reytingda qatnashish uchun test bajarishingiz kerak!\n\n"
+        
+        rating_text += "📋 Reyting turlarini tanlang:"
+        
+        keyboard = [
+            [KeyboardButton("🥇 O'rtacha ball bo'yicha"), KeyboardButton("🏆 Eng yaxshi natija")],
+            [KeyboardButton("📊 Eng faol o'quvchilar"), KeyboardButton("👤 Mening o'rnim")],
+            [KeyboardButton("🔙 Orqaga")]
+        ]
+        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+        
+        await update.message.reply_text(rating_text, reply_markup=reply_markup)
+    
+    async def show_rating_by_average_score(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """O'rtacha ball bo'yicha reyting"""
+        user = update.effective_user
+        user_role = await self.bot.user_service.get_user_role(user.id)
+        
+        if user_role != UserRole.STUDENT:
+            await update.message.reply_text("❌ Bu funksiya faqat o'quvchilar uchun!")
+            return
+        
+        # Top 10 o'quvchilarni olish
+        top_students = await self.bot.test_service.get_top_students_by_average_score(10)
+        
+        if not top_students:
+            await update.message.reply_text("📊 Hozircha reyting ma'lumotlari yo'q.")
+            return
+        
+        rating_text = "🥇 O'rtacha ball bo'yicha TOP 10:\n\n"
+        
+        for i, student_data in enumerate(top_students, 1):
+            # O'quvchi ma'lumotlarini olish
+            student = await self.bot.user_service.get_user_by_id(student_data.student_id)
+            student_name = student.first_name if student else "Noma'lum"
+            
+            # Medal emojilari
+            medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"{i}."
+            
+            rating_text += f"{medal} {student_name}\n"
+            rating_text += f"   📊 O'rtacha: {student_data.avg_score:.1f}%\n"
+            rating_text += f"   📝 Testlar: {student_data.tests_count} ta\n\n"
+        
+        keyboard = [
+            [KeyboardButton("🏆 Eng yaxshi natija"), KeyboardButton("📊 Eng faol o'quvchilar")],
+            [KeyboardButton("👤 Mening o'rnim"), KeyboardButton("🔙 Orqaga")]
+        ]
+        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+        
+        await update.message.reply_text(rating_text, reply_markup=reply_markup)
+    
+    async def show_rating_by_best_score(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Eng yaxshi natija bo'yicha reyting"""
+        user = update.effective_user
+        user_role = await self.bot.user_service.get_user_role(user.id)
+        
+        if user_role != UserRole.STUDENT:
+            await update.message.reply_text("❌ Bu funksiya faqat o'quvchilar uchun!")
+            return
+        
+        # Top 10 o'quvchilarni olish
+        top_students = await self.bot.test_service.get_top_students_by_best_score(10)
+        
+        if not top_students:
+            await update.message.reply_text("📊 Hozircha reyting ma'lumotlari yo'q.")
+            return
+        
+        rating_text = "🏆 Eng yaxshi natija bo'yicha TOP 10:\n\n"
+        
+        for i, student_data in enumerate(top_students, 1):
+            # O'quvchi ma'lumotlarini olish
+            student = await self.bot.user_service.get_user_by_id(student_data.student_id)
+            student_name = student.first_name if student else "Noma'lum"
+            
+            # Medal emojilari
+            medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"{i}."
+            
+            rating_text += f"{medal} {student_name}\n"
+            rating_text += f"   🏆 Eng yaxshi: {student_data.best_score:.1f}%\n"
+            rating_text += f"   📝 Testlar: {student_data.tests_count} ta\n\n"
+        
+        keyboard = [
+            [KeyboardButton("🥇 O'rtacha ball bo'yicha"), KeyboardButton("📊 Eng faol o'quvchilar")],
+            [KeyboardButton("👤 Mening o'rnim"), KeyboardButton("🔙 Orqaga")]
+        ]
+        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+        
+        await update.message.reply_text(rating_text, reply_markup=reply_markup)
+    
+    async def show_rating_by_tests_count(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Eng faol o'quvchilar reytingi"""
+        user = update.effective_user
+        user_role = await self.bot.user_service.get_user_role(user.id)
+        
+        if user_role != UserRole.STUDENT:
+            await update.message.reply_text("❌ Bu funksiya faqat o'quvchilar uchun!")
+            return
+        
+        # Top 10 o'quvchilarni olish
+        top_students = await self.bot.test_service.get_top_students_by_tests_count(10)
+        
+        if not top_students:
+            await update.message.reply_text("📊 Hozircha reyting ma'lumotlari yo'q.")
+            return
+        
+        rating_text = "📊 Eng faol o'quvchilar TOP 10:\n\n"
+        
+        for i, student_data in enumerate(top_students, 1):
+            # O'quvchi ma'lumotlarini olish
+            student = await self.bot.user_service.get_user_by_id(student_data.student_id)
+            student_name = student.first_name if student else "Noma'lum"
+            
+            # Medal emojilari
+            medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"{i}."
+            
+            rating_text += f"{medal} {student_name}\n"
+            rating_text += f"   📝 Testlar: {student_data.tests_count} ta\n"
+            rating_text += f"   📊 O'rtacha: {student_data.avg_score:.1f}%\n\n"
+        
+        keyboard = [
+            [KeyboardButton("🥇 O'rtacha ball bo'yicha"), KeyboardButton("🏆 Eng yaxshi natija")],
+            [KeyboardButton("👤 Mening o'rnim"), KeyboardButton("🔙 Orqaga")]
+        ]
+        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+        
+        await update.message.reply_text(rating_text, reply_markup=reply_markup)
+    
+    async def show_my_ranking_position(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """O'quvchining o'z o'rnini ko'rsatish"""
+        user = update.effective_user
+        user_role = await self.bot.user_service.get_user_role(user.id)
+        
+        if user_role != UserRole.STUDENT:
+            await update.message.reply_text("❌ Bu funksiya faqat o'quvchilar uchun!")
+            return
+        
+        # O'quvchining ma'lumotlarini olish
+        db_user = await self.bot.user_service.get_user_by_telegram_id(user.id)
+        if not db_user:
+            await update.message.reply_text("❌ Foydalanuvchi topilmadi!")
+            return
+        
+        # O'quvchining reytingdagi o'rnini olish
+        ranking = await self.bot.test_service.get_student_ranking_position(db_user.id)
+        
+        if not ranking['position']:
+            await update.message.reply_text(
+                "📊 Reytingda qatnashish uchun kamida 1 ta test bajarishingiz kerak!\n\n"
+                "📝 Test bajarib, natijalaringizni ko'ring!",
+                reply_markup=ReplyKeyboardMarkup([[KeyboardButton("🔙 Orqaga")]], resize_keyboard=True)
+            )
+            return
+        
+        # O'quvchining statistikasini olish
+        avg_score = await self.bot.test_service.get_student_average_score(db_user.id)
+        best_score = await self.bot.test_service.get_student_best_score(db_user.id)
+        
+        position_text = f"""
+👤 Sizning reyting ma'lumotlaringiz:
+
+🏅 Reytingdagi o'rin: {ranking['position']}/{ranking['total_students']}
+📊 O'rtacha ball: {ranking['avg_score']:.1f}%
+🏆 Eng yaxshi natija: {best_score:.1f}%
+📝 Bajarilgan testlar: {ranking['tests_count']} ta
+
+"""
+        
+        # O'rin bo'yicha motivatsion xabar
+        if ranking['position'] <= 3:
+            position_text += "🎉 Ajoyib! Siz eng yaxshi o'quvchilar qatoridasiz!"
+        elif ranking['position'] <= 10:
+            position_text += "👍 Yaxshi natija! Davom eting!"
+        elif ranking['position'] <= ranking['total_students'] // 2:
+            position_text += "📈 O'rtacha natija. Yaxshilash uchun ko'proq test bajarib ko'ring!"
+        else:
+            position_text += "💪 Natijalaringizni yaxshilash uchun ko'proq mashq qiling!"
+        
+        keyboard = [
+            [KeyboardButton("🥇 O'rtacha ball bo'yicha"), KeyboardButton("🏆 Eng yaxshi natija")],
+            [KeyboardButton("📊 Eng faol o'quvchilar"), KeyboardButton("🔙 Orqaga")]
+        ]
+        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+        
+        await update.message.reply_text(position_text, reply_markup=reply_markup)

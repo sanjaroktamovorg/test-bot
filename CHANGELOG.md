@@ -1,5 +1,40 @@
 # Test Bot - Changelog
 
+## [v0.9.33] - 2025-01-27
+
+### ✅ Reyting bo'limi to'liq ishlab chiqildi
+- **4 xil reyting turi** - O'quvchilar uchun to'liq reyting tizimi
+- **O'rtacha ball bo'yicha** - Eng yaxshi o'rtacha ballga ega o'quvchilar
+- **Eng yaxshi natija** - Biror testda eng yaxshi natija qayd etganlar
+- **Eng faol o'quvchilar** - Ko'p test bajargan o'quvchilar
+- **O'z o'rnini ko'rish** - Har bir o'quvchi o'z reytingini ko'ra oladi
+
+### 🏆 Reyting funksiyalari
+- **TOP 10 ro'yxati** - Har bir turda eng yaxshi 10 o'quvchi
+- **Medal emojilari** - 🥇🥈🥉 1-3 o'rinlar uchun
+- **Motivatsion xabarlar** - O'rin bo'yicha rag'batlantiruvchi xabarlar
+- **Statistika ko'rsatkichlari** - O'rtacha ball, testlar soni, eng yaxshi natija
+
+### 📊 Yangi metodlar
+- **get_top_students_by_average_score()** - O'rtacha ball bo'yicha
+- **get_top_students_by_best_score()** - Eng yaxshi natija bo'yicha
+- **get_top_students_by_tests_count()** - Testlar soni bo'yicha
+- **get_student_ranking_position()** - O'quvchining o'rnini hisoblash
+
+### 📱 Interfeys
+- **Reyting menyusi** - 4 ta asosiy tugma
+- **Navigatsiya** - Oson o'tish barcha reyting turlari orasida
+- **"Orqaga" tugmasi** - Asosiy menyuga qaytish
+- **Faqat o'quvchilar** - O'qituvchilar uchun cheklangan
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- Reyting bo'limi ishlayapti ✅
+- Barcha reyting turlari mavjud ✅
+- O'quvchilar o'z o'rnini ko'ra oladi ✅
+
+---
+
 ## [v0.9.32] - 2025-01-27
 
 ### ✅ "Orqaga" tugmasi to'liq yangilandi
