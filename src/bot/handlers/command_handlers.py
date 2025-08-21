@@ -105,3 +105,28 @@ Quyidagi tugmalardan birini tanlang:
         
         reply_markup = KeyboardFactory.get_main_keyboard(user_role)
         await update.message.reply_text(menu_text, reply_markup=reply_markup)
+    
+    async def version_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Versiya komandasi"""
+        version_text = """
+🤖 Test Bot - Versiya ma'lumotlari
+
+📋 Versiya: v0.9.25
+📅 Yangilangan: 2025-01-27
+👨‍💻 Developer: Test Bot Team
+
+🆕 So'nggi o'zgarishlar:
+• Sozlamalar paneli soddalashtirildi
+• Profil funksiyasi qo'shildi
+• Batafsil statistika qo'shildi
+• F-string xatoliklari tuzatildi
+
+🔧 Texnik ma'lumotlar:
+• Python 3.10+
+• python-telegram-bot 20.7
+• SQLAlchemy 2.0.23
+• SQLite Database
+
+📞 Yordam uchun: /help
+        """
+        await update.message.reply_text(version_text)

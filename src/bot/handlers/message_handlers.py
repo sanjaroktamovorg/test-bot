@@ -42,6 +42,10 @@ class MessageHandlers:
             await self.bot.command_handlers.help_command(update, context)
         elif text == "⚙️ Sozlamalar":
             await self.settings_command(update, context)
+        elif text == "👤 Profil":
+            await self.profile_command(update, context)
+        elif text == "📊 Batafsil statistika":
+            await self.detailed_stats_command(update, context)
         elif text == "🔙 Orqaga":
             await update.message.reply_text("🏠 Asosiy menyuga qaytdingiz.", reply_markup=KeyboardFactory.get_main_keyboard(user_role))
         elif context.user_data.get('creating_test'):
@@ -288,15 +292,173 @@ class MessageHandlers:
         """
         
         keyboard = [
-            [KeyboardButton("🔄 Rol o'zgartirish")],
+            [KeyboardButton("👤 Profil")],
             [KeyboardButton("🌐 Til o'zgartirish")],
-            [KeyboardButton("🎨 Tema o'zgartirish")],
             [KeyboardButton("🔔 Bildirishnomalar")],
             [KeyboardButton("🔙 Orqaga")]
         ]
         reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
         
         await update.message.reply_text(settings_text, reply_markup=reply_markup)
+    
+    async def profile_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Profil ma'lumotlari - har bir foydalanuvchi uchun alohida"""
+        user = update.effective_user
+        user_settings = await self.bot.user_service.get_user_settings(user.id)
+        db_user = await self.bot.user_service.get_user_by_telegram_id(user.id)
+        
+        if not user_settings or not db_user:
+            await update.message.reply_text("❌ Foydalanuvchi ma'lumotlari topilmadi!")
+            return
+        
+        # Foydalanuvchi statistikasini olish
+        if user_settings.role == "teacher":
+            # O'qituvchi statistikasi
+            tests_count = await self.bot.test_service.get_teacher_tests_count(db_user.id)
+            total_results = await self.bot.test_service.get_teacher_total_results(db_user.id)
+            active_tests = await self.bot.test_service.get_teacher_active_tests_count(db_user.id)
+            
+            profile_text = f"""
+👤 O'qituvchi Profili
+
+👨‍🏫 Ism: {user.first_name} {user.last_name or ''}
+🆔 Telegram ID: {user.id}
+📧 Username: @{user.username or 'Yoq'}
+🎭 Rol: O'qituvchi
+📅 Ro'yxatdan o'tgan: {db_user.created_at.strftime('%d.%m.%Y')}
+
+📊 Statistika:
+📝 Yaratilgan testlar: {tests_count}
+✅ Faol testlar: {active_tests}
+📊 Jami natijalar: {total_results}
+
+🌐 Til: {user_settings.language}
+🎨 Tema: {user_settings.theme}
+🔔 Bildirishnomalar: {'✅ Yoqilgan' if user_settings.notifications else '❌ Ochrirlgan'}
+            """
+        else:
+            # O'quvchi statistikasi
+            completed_tests = await self.bot.test_service.get_student_completed_tests_count(db_user.id)
+            average_score = await self.bot.test_service.get_student_average_score(db_user.id)
+            best_score = await self.bot.test_service.get_student_best_score(db_user.id)
+            
+            profile_text = f"""
+👤 O'quvchi Profili
+
+👨‍🎓 Ism: {user.first_name} {user.last_name or ''}
+🆔 Telegram ID: {user.id}
+📧 Username: @{user.username or 'Yoq'}
+🎭 Rol: O'quvchi
+📅 Ro'yxatdan o'tgan: {db_user.created_at.strftime('%d.%m.%Y')}
+
+📊 Statistika:
+📝 Bajarilgan testlar: {completed_tests}
+📊 O'rtacha ball: {average_score:.1f}%
+🏆 Eng yaxshi natija: {best_score:.1f}%
+
+🌐 Til: {user_settings.language}
+🎨 Tema: {user_settings.theme}
+🔔 Bildirishnomalar: {'✅ Yoqilgan' if user_settings.notifications else '❌ Ochrirlgan'}
+            """
+        
+        keyboard = [
+            [KeyboardButton("📊 Batafsil statistika")],
+            [KeyboardButton("🔙 Orqaga")]
+        ]
+        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+        
+        await update.message.reply_text(profile_text, reply_markup=reply_markup)
+    
+    async def detailed_stats_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Batafsil statistika - har bir foydalanuvchi uchun alohida"""
+        user = update.effective_user
+        user_settings = await self.bot.user_service.get_user_settings(user.id)
+        db_user = await self.bot.user_service.get_user_by_telegram_id(user.id)
+        
+        if not user_settings or not db_user:
+            await update.message.reply_text("❌ Foydalanuvchi ma'lumotlari topilmadi!")
+            return
+        
+        if user_settings.role == "teacher":
+            # O'qituvchi batafsil statistikasi
+            tests = await self.bot.test_service.get_teacher_tests(db_user.id)
+            total_results = await self.bot.test_service.get_teacher_total_results(db_user.id)
+            active_tests = await self.bot.test_service.get_teacher_active_tests_count(db_user.id)
+            inactive_tests = len(tests) - active_tests
+            
+            stats_text = f"""
+📊 O'qituvchi Batafsil Statistika
+
+👨‍🏫 {user.first_name} {user.last_name or ''}
+
+📝 Testlar:
+• Jami testlar: {len(tests)}
+• Faol testlar: {active_tests}
+• Faol bo'lmagan: {inactive_tests}
+
+📊 Natijalar:
+• Jami natijalar: {total_results}
+• O'rtacha natijalar/test: {total_results/len(tests) if len(tests) > 0 else 0:.1f}
+
+📋 So'nggi testlar:
+            """
+            
+            # So'nggi 5 ta testni ko'rsatish
+            recent_tests = tests[:5]
+            for i, test in enumerate(recent_tests, 1):
+                test_results = await self.bot.test_service.get_test_results(test.id)
+                stats_text += f"{i}. {test.title} ({len(test_results)} natija)\n"
+            
+            if len(tests) > 5:
+                stats_text += f"... va {len(tests) - 5} ta boshqa test\n"
+            
+        else:
+            # O'quvchi batafsil statistikasi
+            results = await self.bot.test_service.get_student_results(db_user.id)
+            completed_tests = len(results)
+            average_score = await self.bot.test_service.get_student_average_score(db_user.id)
+            best_score = await self.bot.test_service.get_student_best_score(db_user.id)
+            
+            # Natijalar bo'yicha tahlil
+            passed_tests = sum(1 for r in results if r.percentage >= 60)
+            failed_tests = completed_tests - passed_tests
+            
+            stats_text = f"""
+📊 O'quvchi Batafsil Statistika
+
+👨‍🎓 {user.first_name} {user.last_name or ''}
+
+📝 Testlar:
+• Bajarilgan testlar: {completed_tests}
+• O'tgan testlar: {passed_tests}
+• O'tmagan testlar: {failed_tests}
+• O'tish foizi: {passed_tests/completed_tests*100 if completed_tests > 0 else 0:.1f}%
+
+📊 Ballar:
+• O'rtacha ball: {average_score:.1f}%
+• Eng yaxshi natija: {best_score:.1f}%
+• Eng past natija: {min([r.percentage for r in results]) if results else 0:.1f}%
+
+📋 So'nggi natijalar:
+            """
+            
+            # So'nggi 5 ta natijani ko'rsatish
+            recent_results = results[:5]
+            for i, result in enumerate(recent_results, 1):
+                test = await self.bot.test_service.get_test_by_id(result.test_id)
+                test_title = test.title if test else "Noma'lum test"
+                status = "✅ O'tdi" if result.percentage >= 60 else "❌ O'tmadi"
+                stats_text += f"{i}. {test_title} - {result.percentage:.1f}% {status}\n"
+            
+            if len(results) > 5:
+                stats_text += f"... va {len(results) - 5} ta boshqa natija\n"
+        
+        keyboard = [
+            [KeyboardButton("🔙 Orqaga")]
+        ]
+        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+        
+        await update.message.reply_text(stats_text, reply_markup=reply_markup)
     
     async def _handle_test_creation(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
         """Test yaratish jarayonini boshqarish - Soddalashtirilgan"""

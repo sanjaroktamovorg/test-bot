@@ -1,5 +1,37 @@
 # Test Bot - Changelog
 
+## [v0.9.25] - 2025-01-27
+
+### ✅ Sozlamalar paneli soddalashtirildi
+- **Barcha foydalanuvchilar uchun bir xil tugmalar** - O'qituvchi va o'quvchi uchun bir xil sozlamalar
+- **Soddalashtirilgan tugmalar** - Profil, Til o'zgartirish, Bildirishnomalar, Orqaga
+- **Tema o'zgartirish olib tashlandi** - Hozircha kerak emas
+
+### 🎯 Yangi funksiyalar
+- **👤 Profil tugmasi** - Foydalanuvchi profil ma'lumotlari va statistikasi
+- **📊 Batafsil statistika** - Har bir foydalanuvchi turiga qarab batafsil statistika
+- **/ver komandasi** - Bot versiyasi va texnik ma'lumotlarni ko'rsatish
+
+### 🔧 Texnik o'zgarishlar
+- **F-string xatoliklari tuzatildi** - Backslash muammolari hal qilindi
+- **Message handlers yangilandi** - Profil va statistika funksiyalari qo'shildi
+- **Command handlers yangilandi** - /ver komandasi qo'shildi
+- **Bot.py yangilandi** - /ver komandasi handler qo'shildi
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- Sozlamalar paneli soddalashtirildi ✅
+- Profil funksiyasi ishlayapti ✅
+- /ver komandasi ishlayapti ✅
+
+### 🎯 Afzalliklari
+- **Soddalik** - Barcha foydalanuvchilar uchun bir xil sozlamalar
+- **Qulaylik** - Profil ma'lumotlari va statistika ko'rish
+- **Aniqlik** - Bot versiyasi va texnik ma'lumotlar
+- **Xavfsizlik** - F-string xatoliklari tuzatildi
+
+---
+
 ## [v0.9.5] - 2025-08-20
 
 ### ✅ Test yaratish jarayoni to'liq soddalashtirildi

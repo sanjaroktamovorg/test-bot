@@ -39,6 +39,7 @@ class TestBot:
         self.application.add_handler(CommandHandler("start", self.command_handlers.start_command))
         self.application.add_handler(CommandHandler("help", self.command_handlers.help_command))
         self.application.add_handler(CommandHandler("menu", self.command_handlers.menu_command))
+        self.application.add_handler(CommandHandler("ver", self.command_handlers.version_command))
         
         # O'qituvchi komandalari
         self.application.add_handler(CommandHandler("create_test", self.message_handlers.create_test_command))
