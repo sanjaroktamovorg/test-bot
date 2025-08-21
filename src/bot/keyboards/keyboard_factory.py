@@ -86,8 +86,9 @@ class KeyboardFactory:
         """Natijalar uchun inline keyboard"""
         keyboard = []
         for result in results:
+            # Test ma'lumotlarini alohida olish kerak
             keyboard.append([InlineKeyboardButton(
-                f"📊 {result.test.title} - {result.percentage:.1f}%", 
+                f"📊 Natija #{result.id} - {result.percentage:.1f}%", 
                 callback_data=f"view_result_{result.id}"
             )])
         

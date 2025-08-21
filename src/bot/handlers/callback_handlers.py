@@ -49,6 +49,9 @@ class CallbackHandlers:
         elif data.startswith("teacher_results_"):
             test_id = int(data.split("_")[2])
             await self.teacher_results_callback(update, context, test_id)
+        elif data.startswith("view_test_results_"):
+            test_id = int(data.split("_")[3])
+            await self.teacher_results_callback(update, context, test_id)
         else:
             await query.edit_message_text("❌ Noma'lum callback!")
     
