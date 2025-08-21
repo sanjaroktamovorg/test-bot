@@ -67,7 +67,6 @@ class KeyboardFactory:
                 callback_data=f"take_test_{test.id}"
             )])
         
-        keyboard.append([InlineKeyboardButton("🔙 Orqaga", callback_data="available_tests")])
         return InlineKeyboardMarkup(keyboard)
     
     @staticmethod
@@ -80,7 +79,6 @@ class KeyboardFactory:
                 callback_data=f"view_teacher_test_{test.id}"
             )])
         
-        keyboard.append([InlineKeyboardButton("🔙 Orqaga", callback_data="back_to_my_tests")])
         return InlineKeyboardMarkup(keyboard)
     
     @staticmethod
@@ -93,7 +91,6 @@ class KeyboardFactory:
                 callback_data=f"view_result_{result.id}"
             )])
         
-        keyboard.append([InlineKeyboardButton("🔙 Orqaga", callback_data="my_results")])
         return InlineKeyboardMarkup(keyboard)
     
     @staticmethod

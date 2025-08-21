@@ -216,34 +216,8 @@ Quyidagi tugmalardan birini tanlang:
             'start_time': test_session['started_at']
         }
         
-        # Test ma'lumotlarini ko'rsatish va boshlash
-        test_questions = await self.bot.test_service.get_test_questions(test_id)
-        questions_count = len(test_questions)
-        
-        test_info = f"""
-📝 Test boshlanmoqda!
-
-📋 Test: {test.title}
-📊 Savollar soni: {questions_count}
-⏱️ Vaqt chegarasi: {test.time_limit or "Cheklanmagan"} daqiqa
-🎯 O'tish balli: {test.passing_score or "Aniqlanmagan"}%
-
-💡 Javoblarni quyidagi formatda kiriting:
-• ABCDABCD... (katta harflar)
-• abcdabcd... (kichik harflar)
-• 1A2B3C4D... (raqam + katta harf)
-• 1a2b3c4d... (raqam + kichik harf)
-
-📝 Misol: abcdabcdabcd
-        """
-        
-        keyboard = [
-            [InlineKeyboardButton("🚀 Testni boshlash", callback_data=f"start_test_{test_id}")],
-            [InlineKeyboardButton("🔙 Orqaga", callback_data="available_tests")]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        
-        await query.edit_message_text(test_info, reply_markup=reply_markup)
+        # Test avtomatik boshlanadi - start_test_callback ni chaqirish
+        await self.start_test_callback(update, context, test_id)
     
     async def view_result_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE, result_id: int):
         """Natija ko'rish callback"""
@@ -483,13 +457,17 @@ Quyidagi tugmalardan birini tanlang:
             await query.edit_message_text("❌ Test sessiyasi boshlanmadi!")
             return
         
+        if 'error' in test_session:
+            await query.edit_message_text(f"❌ {test_session['error']}")
+            return
+        
         # Test ma'lumotlarini context ga saqlash
         context.user_data['current_test'] = {
             'test_id': test_id,
-            'session_id': test_session.id,
+            'session_id': test_session['session_id'],
             'current_question': 0,
             'answers': {},
-            'start_time': test_session.start_time,
+            'start_time': test_session['started_at'],
             'test_title': test.title
         }
         
