@@ -76,6 +76,22 @@ class CallbackHandlers:
             test_id = int(data.split("_")[3])
             await self.switch_to_text_mode(update, context, test_id)
         
+        # Test yaratish ABCD javob variantlari callbacks
+        elif data.startswith("create_answer_"):
+            # Format: create_answer_{question_index}_{option}
+            parts = data.split("_")
+            question_index = int(parts[2])
+            option = parts[3]
+            await self.handle_create_answer(update, context, question_index, option)
+        elif data.startswith("create_test_page_"):
+            # Format: create_test_page_{page}
+            page = int(data.split("_")[3])
+            await self.show_create_test_page(update, context, page)
+        elif data == "create_test_finish":
+            await self.finish_create_test(update, context)
+        elif data == "create_test_cancel":
+            await self.cancel_create_test(update, context)
+        
         else:
             await query.edit_message_text("❌ Noma'lum callback!")
     
@@ -1135,3 +1151,202 @@ Asosiy menyuga o'tish uchun /menu buyrug'ini yuboring.
         """
         
         await query.edit_message_text(text_message)
+    
+    # Test yaratish ABCD javob variantlari funksiyalari
+    async def handle_create_answer(self, update: Update, context: ContextTypes.DEFAULT_TYPE, question_index: int, option: str):
+        """Test yaratishda javob variantini belgilash"""
+        query = update.callback_query
+        
+        # Context dan javoblarni olish
+        create_answers = context.user_data.get('create_answers', {})
+        
+        # Javobni saqlash
+        create_answers[str(question_index)] = option
+        context.user_data['create_answers'] = create_answers
+        
+        # Joriy sahifani qayta ko'rsatish
+        current_page = context.user_data.get('create_current_page', 1)
+        await self.show_create_test_page(update, context, current_page)
+    
+    async def show_create_test_page(self, update: Update, context: ContextTypes.DEFAULT_TYPE, page: int):
+        """Test yaratish sahifasini ko'rsatish (10 talik guruhlar)"""
+        query = update.callback_query
+        
+        # Savollar sonini olish (test_data dan)
+        test_data = context.user_data.get('test_data', {})
+        questions_count = test_data.get('questions_count', 10)  # Default 10 ta
+        
+        # Sahifa parametrlarini hisoblash
+        questions_per_page = 10
+        total_pages = (questions_count + questions_per_page - 1) // questions_per_page
+        
+        if page < 1 or page > total_pages:
+            page = 1
+        
+        start_idx = (page - 1) * questions_per_page
+        end_idx = min(start_idx + questions_per_page, questions_count)
+        
+        # Context dan javoblarni olish
+        create_answers = context.user_data.get('create_answers', {})
+        context.user_data['create_current_page'] = page
+        
+        # Sahifa matnini yaratish
+        message_text = f"""
+📝 Test yaratish - Javob variantlarini belgilash
+📄 Sahifa: {page}/{total_pages} ({start_idx + 1}-{end_idx} savollar)
+
+💡 Har bir savol uchun to'g'ri javob variantini tanlang (A, B, C, D)
+
+"""
+        
+        # Savollarni ko'rsatish
+        keyboard = []
+        for i in range(start_idx, end_idx):
+            question_num = i + 1
+            message_text += f"❓ SAVOL {question_num}\n"
+            
+            # Javob tugmalarini yaratish
+            row = []
+            for option in ['A', 'B', 'C', 'D']:
+                selected = create_answers.get(str(i), '') == option
+                button_text = f"✅{option}" if selected else option
+                callback_data = f"create_answer_{i}_{option}"
+                row.append(InlineKeyboardButton(button_text, callback_data=callback_data))
+            keyboard.append(row)
+            
+            message_text += "\n"
+        
+        # Navigatsiya tugmalarini qo'shish
+        nav_buttons = []
+        if page > 1:
+            nav_buttons.append(InlineKeyboardButton("⬅️ Oldingi 10 ta", callback_data=f"create_test_page_{page-1}"))
+        if page < total_pages:
+            nav_buttons.append(InlineKeyboardButton("➡️ Keyingi 10 ta", callback_data=f"create_test_page_{page+1}"))
+        
+        if nav_buttons:
+            keyboard.append(nav_buttons)
+        
+        # Boshqaruv tugmalari
+        control_buttons = []
+        answered_count = len(create_answers)
+        if answered_count == questions_count:
+            control_buttons.append(InlineKeyboardButton("✅ Testni yaratish", callback_data="create_test_finish"))
+        
+        control_buttons.append(InlineKeyboardButton("✏️ Matn usuli", callback_data="create_test_text_mode"))
+        control_buttons.append(InlineKeyboardButton("🔙 Orqaga", callback_data="create_test_cancel"))
+        keyboard.append(control_buttons)
+        
+        # Progress barni qo'shish
+        progress_text = f"\n📊 Javob belgilangan: {answered_count}/{questions_count}"
+        if answered_count > 0:
+            progress_percent = (answered_count / questions_count) * 100
+            progress_text += f" ({progress_percent:.1f}%)"
+        
+        message_text += progress_text
+        
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(message_text, reply_markup=reply_markup)
+    
+    async def finish_create_test(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Test yaratishni tugatish"""
+        query = update.callback_query
+        
+        # Context dan ma'lumotlarni olish
+        test_data = context.user_data.get('test_data', {})
+        create_answers = context.user_data.get('create_answers', {})
+        user = query.from_user
+        
+        if not test_data or not create_answers:
+            await query.edit_message_text("❌ Test ma'lumotlari topilmadi!")
+            return
+        
+        try:
+            # Foydalanuvchi ma'lumotlarini olish
+            db_user = await self.bot.user_service.get_user_by_telegram_id(user.id)
+            if not db_user:
+                await query.edit_message_text("❌ Foydalanuvchi topilmadi!")
+                return
+            
+            # ABCD formatiga o'tkazish
+            questions_count = test_data.get('questions_count', len(create_answers))
+            abcd_text = ""
+            for i in range(questions_count):
+                abcd_text += create_answers.get(str(i), 'A')  # Default A
+            
+            # Test yaratish
+            test = await self.bot.test_creation_service.create_simple_test(test_data, db_user.id)
+            
+            # ABCD formatida savollar qo'shish
+            success = await self.bot.test_creation_service.create_test_with_abcd_answers(test.id, abcd_text)
+            
+            if success:
+                # Testni faollashtirish
+                await self.bot.test_creation_service.activate_test(test.id)
+                
+                # Savollar sonini hisoblash
+                test_questions = await self.bot.test_service.get_test_questions(test.id)
+                questions_count = len(test_questions)
+                
+                # Test ma'lumotlarini tayyorlash
+                test_info = f"""
+✅ Test muvaffaqiyatli yaratildi va faollashtirildi!
+
+📝 Nomi: {test.title}
+📊 Savollar soni: {questions_count}
+📂 Toifa: {test.category}
+🆔 Test ID: {test.id}
+📊 Holat: ✅ Faol
+
+"""
+                
+                # Shaxsiy test uchun maxsus ma'lumotlar
+                if test.category == "private":
+                    test_info += f"""
+🔐 Shaxsiy test ma'lumotlari:
+🔢 Maxsus raqam: {test.test_code}
+🔗 Ulashish havolasi: https://t.me/your_bot_username?start=test_{test.test_code}
+
+💡 O'quvchilar testni faqat maxsus raqam orqali topa oladi!
+"""
+                else:
+                    test_info += f"🌍 Ommaviy test - barcha o'quvchilar ko'ra oladi!\n"
+                
+                test_info += f"\n📋 Test \"Mening testlarim\" bo'limida ko'rinadi!"
+                
+                keyboard = [
+                    [InlineKeyboardButton("📋 Mening testlarim", callback_data="back_to_my_tests")],
+                    [InlineKeyboardButton("📝 Yangi test yaratish", callback_data="create_test_type_simple")],
+                    [InlineKeyboardButton("🏠 Asosiy menyu", callback_data="back_to_menu")]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                
+                await query.edit_message_text(test_info, reply_markup=reply_markup)
+                
+                # Context tozalash
+                context.user_data['creating_test'] = False
+                context.user_data['test_creation_step'] = None
+                context.user_data['test_data'] = {}
+                context.user_data['create_answers'] = {}
+            else:
+                await query.edit_message_text("❌ Test yaratishda xatolik yuz berdi!")
+                
+        except Exception as e:
+            await query.edit_message_text(f"❌ Xatolik: {str(e)}")
+    
+    async def cancel_create_test(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Test yaratishni bekor qilish"""
+        query = update.callback_query
+        
+        # Barcha test yaratish holatlarini tozalash
+        context.user_data['creating_test'] = False
+        context.user_data['test_creation_step'] = None
+        context.user_data['test_data'] = {}
+        context.user_data['create_answers'] = {}
+        
+        text = "❌ Test yaratish bekor qilindi."
+        keyboard = [
+            [InlineKeyboardButton("🏠 Asosiy menyu", callback_data="back_to_menu")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await query.edit_message_text(text, reply_markup=reply_markup)

@@ -585,6 +585,8 @@ class MessageHandlers:
             await self._handle_test_category_selection(update, context, text)
         elif step == 'enter_title':
             await self._handle_test_title_entry(update, context, text, db_user)
+        elif step == 'enter_questions_count':
+            await self._handle_questions_count_entry(update, context, text)
         elif step == 'enter_abcd_answers':
             await self._handle_abcd_answers_entry(update, context, text, db_user)
     
@@ -673,24 +675,65 @@ class MessageHandlers:
         
         context.user_data['test_data']['title'] = text
         
+        # Savollar sonini so'rash
         await update.message.reply_text(
             f"📝 Test nomi: {text}\n\n"
-            f"Endi savollar va javoblarni ABCD formatida kiriting:\n\n"
-            f"📋 Qo'llab-quvvatlanadigan formatlar:\n"
-            f"• ABCDABCD... (katta harflar)\n"
-            f"• abcdabcd... (kichik harflar)\n"
-            f"• 1A2B3C4D... (raqam + katta harf)\n"
-            f"• 1a2b3c4d... (raqam + kichik harf)\n\n"
-            f"📝 Misollar:\n"
-            f"ABCDABCDABCD\n"
-            f"abcdabcdabcd\n"
-            f"1A2B3C4D5A6B7C8D\n"
-            f"1a2b3c4d5a6b7c8d\n\n"
-            f"💡 Har bir harf bitta savolning to'g'ri javobini bildiradi\n"
-            f"💡 100 tagacha savol kiritish mumkin",
+            f"Endi savollar sonini kiriting (1-100):\n\n"
+            f"💡 Misol: 10, 20, 50, 100",
             reply_markup=KeyboardFactory.get_back_keyboard()
         )
-        context.user_data['test_creation_step'] = 'enter_abcd_answers'
+        context.user_data['test_creation_step'] = 'enter_questions_count'
+    
+    async def _handle_questions_count_entry(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
+        """Savollar sonini kiritish"""
+        if text == '🔙 Orqaga':
+            await update.message.reply_text(
+                "📝 Endi test nomini kiriting:\n\n"
+                "Misol: Algebra testi, Fizika testi, Tarix testi...",
+                reply_markup=KeyboardFactory.get_back_keyboard()
+            )
+            context.user_data['test_creation_step'] = 'enter_title'
+            return
+        
+        try:
+            questions_count = int(text)
+            if questions_count < 1 or questions_count > 100:
+                await update.message.reply_text(
+                    "❌ Savollar soni 1-100 oralig'ida bo'lishi kerak!\n\n"
+                    "Iltimos, qayta kiriting:",
+                    reply_markup=KeyboardFactory.get_back_keyboard()
+                )
+                return
+            
+            context.user_data['test_data']['questions_count'] = questions_count
+            
+            # Inline buttonlar bilan javob variantlarini belgilash
+            from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+            
+            text = f"""
+📝 Test yaratish - Javob variantlarini belgilash
+
+📋 Test nomi: {context.user_data['test_data']['title']}
+📊 Savollar soni: {questions_count}
+
+💡 Qaysi usulda javob variantlarini belgilashni xohlaysiz?
+            """
+            
+            keyboard = [
+                [InlineKeyboardButton("🎯 Inline tugmalar (Tavsiya etiladi)", callback_data="create_test_page_1")],
+                [InlineKeyboardButton("✏️ Matn orqali (Eski usul)", callback_data="create_test_text_mode")],
+                [InlineKeyboardButton("🔙 Orqaga", callback_data="create_test_cancel")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            await update.message.reply_text(text, reply_markup=reply_markup)
+            
+        except ValueError:
+            await update.message.reply_text(
+                "❌ Iltimos, raqam kiriting!\n\n"
+                "Misol: 10, 20, 50, 100",
+                reply_markup=KeyboardFactory.get_back_keyboard()
+            )
     
     async def _handle_abcd_answers_entry(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str, db_user):
         """ABCD formatida javoblarni kiritish"""

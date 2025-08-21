@@ -120,16 +120,30 @@ Quyidagi tugmalardan birini tanlang:
         version_text = """
 🤖 Test Bot - Versiya ma'lumotlari
 
-📋 Versiya: v0.9.51
+📋 Versiya: v0.9.55
 📅 Yangilangan: 2025-01-27
 👨‍💻 Developer: Test Bot Team
 
 🆕 So'nggi o'zgarishlar:
-• 🔍 Test qidirish jarayoni to'g'ri ishlaydi
-• 🚫 /start komandasi barcha jarayonlarni bekor qiladi
-• 🔙 "Orqaga" tugmasi test qidirishni to'xtatadi
-• ⚡ Context user_data tozalash tizimi qo'shildi
-• 🎯 Barcha jarayonlar to'g'ri boshqariladi
+• 🎯 Test yaratishda inline buttonlar bilan javob belgilash
+• 📝 Test yaratishda savollar sonini kiritish
+• 🔄 Test yaratish va test ishlash bir xil interfeys
+• 📱 Sahifalash tizimi test yaratishda ham
+• 🎯 Progress tracking test yaratishda ham
+
+🎯 Test ishlash funksiyalari:
+• ✅ Inline buttonlar orqali javob tanlash (A, B, C, D)
+• 📱 Sahifalash tizimi (10 talik guruhlar)
+• 🎯 Progress tracking (javob berilgan savollar)
+• ✏️ Matn usuli ham mavjud (ABCD formatida)
+• 🔄 Ikkala usul o'rtasida almashish
+
+🎯 Test yaratish funksiyalari:
+• ✅ Inline buttonlar orqali javob belgilash (A, B, C, D)
+• 📱 Sahifalash tizimi (10 talik guruhlar)
+• 🎯 Progress tracking (javob belgilangan savollar)
+• ✏️ Matn usuli ham mavjud (ABCD formatida)
+• 🔄 Ikkala usul o'rtasida almashish
 
 🔧 Texnik ma'lumotlar:
 • Python 3.10+
@@ -138,5 +152,7 @@ Quyidagi tugmalardan birini tanlang:
 • SQLite Database
 
 📞 Yordam uchun: /help
+
+💡 Izoh: Endi test yaratish va test ishlash bir xil interfeys bilan ishlaydi. Inline buttonlar orqali A, B, C, D variantlarini tanlash mumkin!
         """
         await update.message.reply_text(version_text)

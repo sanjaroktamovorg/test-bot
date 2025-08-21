@@ -1,5 +1,37 @@
 # Test Bot - Changelog
 
+## [v0.9.55] - 2025-01-27
+
+### 🎯 Test Yaratishda Inline Buttonlar Bilan Javob Belgilash
+- **Inline buttonlar** - Test yaratishda ABCD javob variantlarini inline buttonlar bilan belgilash
+- **Sahifalash tizimi** - Test yaratishda ham 10 talik guruhlar bo'lib sahifalash
+- **Progress tracking** - Javob belgilangan savollar sonini kuzatish
+- **Bir xil interfeys** - Test yaratish va test ishlash bir xil interfeys bilan
+
+### 📝 Test Yaratish Jarayoni Yangilandi
+- **Savollar sonini kiritish** - Test yaratishda avval savollar sonini kiritish
+- **Inline/Matn tanlash** - Inline buttonlar yoki matn usuli tanlash imkoniyati
+- **Sahifalash** - 10 talik guruhlar bo'lib javob variantlarini belgilash
+- **Progress bar** - Javob belgilangan savollar foizini ko'rsatish
+
+### 🔄 Test Yaratish va Test Ishlish Bir Xil
+- **Bir xil interfeys** - Ikkala jarayon ham bir xil ko'rinishda
+- **Inline buttonlar** - A, B, C, D variantlarini inline buttonlar bilan
+- **Sahifalash** - 10 talik guruhlar bo'lib ko'rsatish
+- **Progress tracking** - Javob berilgan/belgilangan savollar soni
+
+### 🎨 Foydalanuvchi Tajribasi Yaxshilandi
+- **Qulay interfeys** - O'qituvchilar va o'quvchilar uchun bir xil tajriba
+- **Vizual feedback** - Tanlangan javoblar darhol ko'rinadi
+- **Navigatsiya** - Oson sahifalar orasida o'tish
+- **Progress kuzatish** - Real-time progress ko'rsatkichi
+
+### 🔧 Texnik Yangilanishlar
+- **Callback handlers** - Yangi test yaratish callback funksiyalari
+- **Inline keyboards** - Test yaratish uchun maxsus inline keyboardlar
+- **State management** - Test yaratish holatini to'g'ri boshqarish
+- **User experience** - Foydalanuvchi tajribasi yaxshilandi
+
 ## [v0.9.51] - 2025-01-27
 
 ### 🔍 Test Qidirish Jarayoni Tuzatildi
