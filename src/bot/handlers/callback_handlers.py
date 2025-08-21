@@ -53,6 +53,8 @@ class CallbackHandlers:
             await self.teacher_results_callback(update, context, test_id)
         elif data == "back_to_menu":
             await self.back_to_menu_callback(update, context)
+        elif data == "main_menu":
+            await self.main_menu_callback(update, context)
         
         # Inline test answer callbacks
         elif data.startswith("answer_"):
@@ -307,10 +309,14 @@ class CallbackHandlers:
 👤 Foydalanuvchi: {user.first_name}
 🎭 Rol: {role_name}
 
-Quyidagi tugmalardan birini tanlang:
+Asosiy menyuga qaytdingiz.
         """
         
-        reply_markup = KeyboardFactory.get_main_keyboard(user_role)
+        # Inline keyboard yaratish
+        keyboard = [
+            [InlineKeyboardButton("🏠 Asosiy menyu", callback_data="main_menu")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(menu_text, reply_markup=reply_markup)
     
     async def change_role_confirm_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -369,10 +375,13 @@ Quyidagi tugmalardan birini tanlang:
 🎭 Rol: {role_name}
 
 Rol o'zgartirish bekor qilindi.
-Quyidagi tugmalardan birini tanlang:
         """
         
-        reply_markup = KeyboardFactory.get_main_keyboard(user_role)
+        # Inline keyboard yaratish
+        keyboard = [
+            [InlineKeyboardButton("🏠 Asosiy menyu", callback_data="main_menu")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(menu_text, reply_markup=reply_markup)
     
 
@@ -405,6 +414,31 @@ Asosiy menyuga o'tish uchun /menu buyrug'ini yuboring.
             await query.edit_message_text(confirmation_text, parse_mode='Markdown')
         else:
             await query.edit_message_text("❌ Rol o'zgartirishda xatolik yuz berdi!")
+    
+    async def main_menu_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Asosiy menyu callback"""
+        query = update.callback_query
+        user = query.from_user
+        
+        # Foydalanuvchi roli tekshirish
+        user_role = await self.bot.user_service.get_user_role(user.id)
+        
+        # Rol nomini alohida aniqlash
+        role_name = '👨‍🏫 O\'qituvchi' if user_role == UserRole.TEACHER else '👨‍🎓 O\'quvchi'
+        
+        menu_text = f"""
+🏠 Asosiy menyu
+
+👤 Foydalanuvchi: {user.first_name}
+🎭 Rol: {role_name}
+
+Quyidagi tugmalardan birini tanlang:
+        """
+        
+        # ReplyKeyboardMarkup yaratish va yangi xabar yuborish
+        reply_markup = KeyboardFactory.get_main_keyboard(user_role)
+        await query.message.reply_text(menu_text, reply_markup=reply_markup)
+        await query.delete_message()
     
     async def role_student_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """O'quvchi roli tanlash"""

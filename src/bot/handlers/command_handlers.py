@@ -111,16 +111,16 @@ Quyidagi tugmalardan birini tanlang:
         version_text = """
 🤖 Test Bot - Versiya ma'lumotlari
 
-📋 Versiya: v0.9.35
+📋 Versiya: v0.9.36
 📅 Yangilangan: 2025-01-27
 👨‍💻 Developer: Test Bot Team
 
 🆕 So'nggi o'zgarishlar:
-• 🔐 Shaxsiy test uchun maxsus raqam va ulashish havolasi
-• 🔍 Test nomi unique validatsiyasi (bir o'qituvchi uchun unique)
-• 📄 Ommaviy testlar qidiruvida sahifalash (10 talik guruhlar)
-• 🔒 Shaxsiy testlar faqat maxsus raqam orqali topiladi
-• 📊 Qidiruv natijalarida navigatsiya tugmalari
+• 🔧 Muhim xatoliklar tuzatildi
+• 🎯 Inline keyboard xatoliklari bartaraf etildi
+• 📱 Callback handler xatoliklari tuzatildi
+• 🗄️ Database schema xatoliklari bartaraf etildi
+• ⚡ Bot jarayonlari konflikti hal qilindi
 
 🔧 Texnik ma'lumotlar:
 • Python 3.10+

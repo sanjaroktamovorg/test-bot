@@ -1,5 +1,28 @@
 # Test Bot - Changelog
 
+## [v0.9.36] - 2025-01-27
+
+### 🔧 Muhim Xatoliklar Tuzatilishi
+- **IndentationError tuzatildi** - command_handlers.py faylidagi syntax xatolik
+- **Inline keyboard xatoliklari** - callback_handlers.py dagi "Inline keyboard expected" xatolik
+- **Database schema xatoliklari** - SQLite jadvallarining to'g'ri yaratilishi
+- **Bot jarayonlari konflikti** - ko'p bot instance ishlash muammosi hal qilindi
+
+### 🎯 Callback Handler Yangilanishi
+- **back_to_menu_callback** - InlineKeyboardMarkup bilan to'g'ri ishlash
+- **main_menu_callback** - Yangi callback handler qo'shildi
+- **change_role_cancel_callback** - Inline keyboard bilan ishlash
+
+### 📱 Interfeys Yaxshilanishi
+- **Xatolik xabarlari** - Aniq va tushunarli xatolik xabarlari
+- **Navigatsiya** - To'g'ri callback tugmalar bilan ishlash
+- **Stabilite** - Bot barqaror ishlash
+
+### 🔧 Texnik Yangilanishlar
+- **Error handling** - Xatoliklarni to'g'ri qayta ishlash
+- **Code cleanup** - Kod tozalash va optimizatsiya
+- **Performance** - Bot ishlash tezligi yaxshilandi
+
 ## [v0.9.35] - 2025-01-27
 
 ### 🔐 Shaxsiy Test Tizimi va Qidiruv Yangilanishi
