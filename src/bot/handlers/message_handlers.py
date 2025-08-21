@@ -1,4 +1,4 @@
-from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
+from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from src.models import UserRole
 from src.bot.keyboards import KeyboardFactory
@@ -41,6 +41,9 @@ class MessageHandlers:
         elif context.user_data.get('creating_test'):
             # Test yaratish logikasi
             await self._handle_test_creation(update, context, text)
+        elif context.user_data.get('searching_test'):
+            # Test qidirish logikasi
+            await self._handle_test_search(update, context, text)
         else:
             await update.message.reply_text("❓ Tushunarsiz xabar. /help komandasi bilan yordam oling.")
     
@@ -357,5 +360,82 @@ class MessageHandlers:
             await update.message.reply_text(
                 f"❌ Xatolik: {str(e)}\n\n"
                 f"Iltimos, ABCD formatini to'g'ri kiriting!",
+                reply_markup=KeyboardFactory.get_back_keyboard()
+            )
+
+    async def _handle_test_search(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
+        """Test qidirish logikasi"""
+        if text == '🔙 Orqaga':
+            # Test qidirish holatini to'xtatish
+            context.user_data['searching_test'] = False
+            
+            # Mavjud testlar menyusiga qaytish
+            keyboard = [
+                [InlineKeyboardButton("🌍 Ommaviy testlar", callback_data="public_tests")],
+                [InlineKeyboardButton("🔍 Testni qidirish", callback_data="search_test")],
+                [InlineKeyboardButton("🔙 Orqaga", callback_data="back_to_menu")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            await update.message.reply_text(
+                "📝 Mavjud testlar:\n\nQaysi turdagi testlarni ko'rmoqchisiz?",
+                reply_markup=reply_markup
+            )
+            return
+        
+        # Test qidirish
+        try:
+            # Avval test kodini tekshirish
+            test = await self.bot.test_service.get_test_by_code(text)
+            
+            if not test:
+                # Test nomi bo'yicha qidirish
+                test = await self.bot.test_service.search_test_by_title(text)
+            
+            if test:
+                # Test topildi
+                if test.status == "active":
+                    # Test ma'lumotlarini ko'rsatish
+                    teacher = await self.bot.user_service.get_user_by_id(test.teacher_id)
+                    teacher_name = teacher.first_name if teacher else "Noma'lum"
+                    
+                    test_info = f"""
+🔍 Test topildi!
+
+📝 Nomi: {test.title}
+📄 Tavsif: {test.description or "Tavsif yo'q"}
+👨‍🏫 O'qituvchi: {teacher_name}
+📂 Toifa: {'🌍 Ommaviy' if test.category == 'public' else '🔒 Shaxsiy'}
+⏱️ Vaqt chegarasi: {test.time_limit or "Cheklanmagan"} daqiqa
+🎯 O'tish balli: {test.passing_score or "Aniqlanmagan"}%
+🆔 Test kodi: {test.test_code or "Yo'q"}
+                    """
+                    
+                    keyboard = [
+                        [InlineKeyboardButton("📝 Testni boshlash", callback_data=f"take_test_{test.id}")],
+                        [InlineKeyboardButton("🔍 Boshqa test qidirish", callback_data="search_test")],
+                        [InlineKeyboardButton("🔙 Orqaga", callback_data="available_tests")]
+                    ]
+                    reply_markup = InlineKeyboardMarkup(keyboard)
+                    
+                    await update.message.reply_text(test_info, reply_markup=reply_markup)
+                    
+                    # Qidirish holatini to'xtatish
+                    context.user_data['searching_test'] = False
+                else:
+                    await update.message.reply_text(
+                        "❌ Bu test hali faol emas!",
+                        reply_markup=KeyboardFactory.get_back_keyboard()
+                    )
+            else:
+                await update.message.reply_text(
+                    f"❌ \"{text}\" nomli yoki kodli test topilmadi!\n\n"
+                    f"🔍 Qayta urinib ko'ring yoki boshqa test qidiring.",
+                    reply_markup=KeyboardFactory.get_back_keyboard()
+                )
+                
+        except Exception as e:
+            await update.message.reply_text(
+                f"❌ Qidirishda xatolik yuz berdi: {str(e)}",
                 reply_markup=KeyboardFactory.get_back_keyboard()
             )

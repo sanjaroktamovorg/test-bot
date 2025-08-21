@@ -104,5 +104,51 @@ async def test_my_tests():
         import traceback
         traceback.print_exc()
 
+async def test_student_functions():
+    print('\n🔍 O\'quvchilar funksiyalarini test qilish...')
+    print('=' * 50)
+    
+    try:
+        # Bot instance yaratish
+        bot = TestBot()
+        message_handlers = MessageHandlers(bot)
+        callback_handlers = CallbackHandlers(bot)
+        
+        # 1. "Mavjud testlar" tugmasini bosish
+        print('1️⃣ "Mavjud testlar" tugmasini bosish:')
+        update1 = FakeUpdate(123456789, 'O\'quvchi', '📝 Mavjud testlar')
+        context1 = FakeContext()
+        
+        await message_handlers.available_tests_command(update1, context1)
+        
+        # 2. Mavjud testlar menyusini ko'rish
+        print('\n2️⃣ Mavjud testlar menyusi:')
+        update2 = FakeCallbackUpdate(123456789, 'O\'quvchi', 'available_tests')
+        context2 = FakeContext()
+        
+        await callback_handlers.available_tests_menu_callback(update2, context2)
+        
+        # 3. Ommaviy testlarni ko'rish
+        print('\n3️⃣ Ommaviy testlar:')
+        update3 = FakeCallbackUpdate(123456789, 'O\'quvchi', 'public_tests')
+        context3 = FakeContext()
+        
+        await callback_handlers.public_tests_callback(update3, context3)
+        
+        # 4. Test qidirish
+        print('\n4️⃣ Test qidirish:')
+        update4 = FakeCallbackUpdate(123456789, 'O\'quvchi', 'search_test')
+        context4 = FakeContext()
+        
+        await callback_handlers.search_test_callback(update4, context4)
+        
+        print('\n✅ O\'quvchilar funksiyalari muvaffaqiyatli ishladi!')
+        
+    except Exception as e:
+        print(f'❌ Xatolik: {str(e)}')
+        import traceback
+        traceback.print_exc()
+
 if __name__ == "__main__":
     asyncio.run(test_my_tests())
+    asyncio.run(test_student_functions())

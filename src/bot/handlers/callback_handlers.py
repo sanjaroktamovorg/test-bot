@@ -35,6 +35,12 @@ class CallbackHandlers:
             await self.view_result_callback(update, context, result_id)
         elif data == "back_to_my_tests":
             await self.back_to_my_tests_callback(update, context)
+        elif data == "available_tests":
+            await self.available_tests_menu_callback(update, context)
+        elif data == "public_tests":
+            await self.public_tests_callback(update, context)
+        elif data == "search_test":
+            await self.search_test_callback(update, context)
         else:
             await query.edit_message_text("❌ Noma'lum callback!")
     
@@ -161,7 +167,48 @@ Quyidagi tugmalardan birini tanlang:
     async def take_test_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE, test_id: int):
         """Test ishlash callback"""
         query = update.callback_query
-        await query.edit_message_text("📝 Test ishlash funksiyasi ishlab chiqilmoqda...")
+        user = query.from_user
+        
+        # Foydalanuvchi roli tekshirish
+        user_role = await self.bot.user_service.get_user_role(user.id)
+        if user_role != UserRole.STUDENT:
+            await query.edit_message_text("❌ Bu funksiya faqat o'quvchilar uchun!")
+            return
+        
+        # Test ma'lumotlarini olish
+        test = await self.bot.test_service.get_test_by_id(test_id)
+        if not test:
+            await query.edit_message_text("❌ Test topilmadi!")
+            return
+        
+        # Test faol ekanligini tekshirish
+        if test.status != "active":
+            await query.edit_message_text("❌ Bu test hali faol emas!")
+            return
+        
+        # Foydalanuvchi ma'lumotlarini olish
+        db_user = await self.bot.user_service.get_user_by_telegram_id(user.id)
+        if not db_user:
+            await query.edit_message_text("❌ Foydalanuvchi topilmadi!")
+            return
+        
+        # Test sessiyasini boshlash
+        test_session = await self.bot.test_taking_service.start_test_session(test_id, db_user.id)
+        if not test_session:
+            await query.edit_message_text("❌ Test sessiyasi boshlanmadi!")
+            return
+        
+        # Test ma'lumotlarini context ga saqlash
+        context.user_data['current_test'] = {
+            'test_id': test_id,
+            'session_id': test_session.id,
+            'current_question': 0,
+            'answers': {},
+            'start_time': test_session.start_time
+        }
+        
+        # Birinchi savolni ko'rsatish
+        await self.show_test_question(update, context, 0)
     
     async def view_result_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE, result_id: int):
         """Natija ko'rish callback"""
@@ -226,6 +273,68 @@ Quyidagi tugmalardan birini tanlang:
         reply_markup = InlineKeyboardMarkup(keyboard)
         
         await query.edit_message_text(test_details, reply_markup=reply_markup)
+    
+    async def available_tests_menu_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Mavjud testlar menyusi"""
+        query = update.callback_query
+        user = query.from_user
+        
+        # Foydalanuvchi roli tekshirish
+        user_role = await self.bot.user_service.get_user_role(user.id)
+        if user_role != UserRole.STUDENT:
+            await query.edit_message_text("❌ Bu funksiya faqat o'quvchilar uchun!")
+            return
+        
+        text = "📝 Mavjud testlar:\n\nQaysi turdagi testlarni ko'rmoqchisiz?"
+        
+        keyboard = [
+            [InlineKeyboardButton("🌍 Ommaviy testlar", callback_data="public_tests")],
+            [InlineKeyboardButton("🔍 Testni qidirish", callback_data="search_test")],
+            [InlineKeyboardButton("🔙 Orqaga", callback_data="back_to_menu")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await query.edit_message_text(text, reply_markup=reply_markup)
+    
+    async def public_tests_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Ommaviy testlar ro'yxati"""
+        query = update.callback_query
+        
+        # Faqat ommaviy testlarni olish
+        tests = await self.bot.test_service.get_public_tests()
+        
+        if not tests:
+            await query.edit_message_text("📝 Hozircha ommaviy testlar mavjud emas.")
+            return
+        
+        text = "🌍 Ommaviy testlar:\n\n"
+        for i, test in enumerate(tests, 1):
+            # Teacher ma'lumotlarini alohida olish
+            teacher = await self.bot.user_service.get_user_by_id(test.teacher_id)
+            teacher_name = teacher.first_name if teacher else "Noma'lum"
+            
+            text += f"{i}. 📋 {test.title}\n"
+            text += f"   👨‍🏫 {teacher_name}\n"
+            text += f"   📊 {test.passing_score or 'Belgilanmagan'}% o'tish balli\n\n"
+        
+        reply_markup = KeyboardFactory.get_test_keyboard(tests)
+        await query.edit_message_text(text, reply_markup=reply_markup)
+    
+    async def search_test_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Test qidirish"""
+        query = update.callback_query
+        
+        # Test qidirish holatini context ga saqlash
+        context.user_data['searching_test'] = True
+        
+        text = "🔍 Test qidirish:\n\nIltimos, test kodini yoki nomini kiriting:"
+        
+        keyboard = [
+            [InlineKeyboardButton("🔙 Orqaga", callback_data="available_tests")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await query.edit_message_text(text, reply_markup=reply_markup)
     
     async def back_to_my_tests_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Mening testlarim ro'yxatiga qaytish"""

@@ -44,12 +44,34 @@ class TestService:
         finally:
             self.db.close_session(session)
     
+    async def get_public_tests(self) -> list[Test]:
+        """Faqat ommaviy testlarni olish"""
+        session = self.db.get_session()
+        try:
+            return session.query(Test).filter(
+                Test.status == TestStatus.ACTIVE.value,
+                Test.category == TestCategory.PUBLIC.value
+            ).all()
+        finally:
+            self.db.close_session(session)
+    
     async def get_test_by_code(self, test_code: str) -> Test:
         """Maxsus kod bo'yicha testni olish"""
         session = self.db.get_session()
         try:
             return session.query(Test).filter(
                 Test.test_code == test_code,
+                Test.status == TestStatus.ACTIVE.value
+            ).first()
+        finally:
+            self.db.close_session(session)
+    
+    async def search_test_by_title(self, title: str) -> Test:
+        """Test nomi bo'yicha qidirish"""
+        session = self.db.get_session()
+        try:
+            return session.query(Test).filter(
+                Test.title.ilike(f"%{title}%"),
                 Test.status == TestStatus.ACTIVE.value
             ).first()
         finally:
