@@ -3,6 +3,7 @@ from telegram.ext import ContextTypes
 from src.models import UserRole
 from src.bot.keyboards import KeyboardFactory
 import time
+from datetime import datetime
 
 class CallbackHandlers:
     """Callback handerlari"""
@@ -356,7 +357,7 @@ Quyidagi tugmalardan birini tanlang:
 
     
     async def role_teacher_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """O'qituvchi roli tanlash - to'g'ridan-to'g'ri dashboard"""
+        """O'qituvchi roli tanlash"""
         query = update.callback_query
         user = query.from_user
         
@@ -364,24 +365,28 @@ Quyidagi tugmalardan birini tanlang:
         success = await self.bot.user_service.update_user_role(user.id, UserRole.TEACHER)
         
         if success:
-            # To'g'ridan-to'g'ri o'qituvchi dashboard ko'rsatish
-            menu_text = f"""
-🏠 O'qituvchi Dashboard
+            # Rol tanlash tasdiqlash xabari
+            confirmation_text = f"""
+✅ **Rol muvaffaqiyatli tanlandi!**
 
 👤 Foydalanuvchi: {user.first_name}
 🎭 Rol: 👨‍🏫 O'qituvchi
-🆔 Telegram ID: {user.id}
+📅 Sana: {datetime.now().strftime('%d.%m.%Y %H:%M')}
 
-Quyidagi tugmalardan birini tanlang:
+🎉 Tabriklaymiz! Endi siz o'qituvchi sifatida:
+• 📝 Testlar yaratishingiz mumkin
+• 📊 Natijalarni ko'rishingiz mumkin
+• 👥 O'quvchilarni boshqarishingiz mumkin
+
+Asosiy menyuga o'tish uchun /menu buyrug'ini yuboring.
             """
             
-            reply_markup = KeyboardFactory.get_main_keyboard(UserRole.TEACHER)
-            await query.edit_message_text(menu_text, reply_markup=reply_markup)
+            await query.edit_message_text(confirmation_text, parse_mode='Markdown')
         else:
             await query.edit_message_text("❌ Rol o'zgartirishda xatolik yuz berdi!")
     
     async def role_student_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """O'quvchi roli tanlash - to'g'ridan-to'g'ri dashboard"""
+        """O'quvchi roli tanlash"""
         query = update.callback_query
         user = query.from_user
         
@@ -389,19 +394,23 @@ Quyidagi tugmalardan birini tanlang:
         success = await self.bot.user_service.update_user_role(user.id, UserRole.STUDENT)
         
         if success:
-            # To'g'ridan-to'g'ri o'quvchi dashboard ko'rsatish
-            menu_text = f"""
-🏠 O'quvchi Dashboard
+            # Rol tanlash tasdiqlash xabari
+            confirmation_text = f"""
+✅ **Rol muvaffaqiyatli tanlandi!**
 
 👤 Foydalanuvchi: {user.first_name}
 🎭 Rol: 👨‍🎓 O'quvchi
-🆔 Telegram ID: {user.id}
+📅 Sana: {datetime.now().strftime('%d.%m.%Y %H:%M')}
 
-Quyidagi tugmalardan birini tanlang:
+🎉 Tabriklaymiz! Endi siz o'quvchi sifatida:
+• 📝 Mavjud testlarni ishlashingiz mumkin
+• 📊 Natijalaringizni ko'rishingiz mumkin
+• 🏆 Reytingda qatnashishingiz mumkin
+
+Asosiy menyuga o'tish uchun /menu buyrug'ini yuboring.
             """
             
-            reply_markup = KeyboardFactory.get_main_keyboard(UserRole.STUDENT)
-            await query.edit_message_text(menu_text, reply_markup=reply_markup)
+            await query.edit_message_text(confirmation_text, parse_mode='Markdown')
         else:
             await query.edit_message_text("❌ Rol o'zgartirishda xatolik yuz berdi!")
     
