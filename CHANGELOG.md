@@ -1,5 +1,57 @@
 # Test Bot - Changelog
 
+## [v0.9.51] - 2025-01-27
+
+### 🔍 Test Qidirish Jarayoni Tuzatildi
+- **Test qidirish to'xtatish** - "🔙 Orqaga" tugmasi test qidirishni to'g'ri to'xtatadi
+- **Context tozalash** - /start komandasi barcha jarayonlarni bekor qiladi
+- **Jarayon boshqaruvi** - Barcha holatlar to'g'ri boshqariladi
+- **Xatolik tuzatish** - _handle_test_search da user o'zgaruvchisi aniqlanmagan xatolik
+
+### 🚫 Jarayon Bekor Qilish Tizimi
+- **/start komandasi** - Barcha jarayonlarni bekor qiladi va asosiy menyuga qaytaradi
+- **"Orqaga" tugmasi** - Test qidirish, test yaratish, test ishlash jarayonlarini to'xtatadi
+- **Context user_data** - Barcha holatlar tozalash tizimi qo'shildi
+- **Holat sinxronlash** - Barcha jarayonlar bir-biri bilan sinxronlashadi
+
+### 🎯 Foydalanuvchi Tajribasi Yaxshilandi
+- **Test qidirish** - Endi to'g'ri ishlaydi va to'xtatiladi
+- **Navigatsiya** - Barcha tugmalar to'g'ri ishlaydi
+- **Xatoliklar** - Xatolik xabarlari to'g'ri ko'rsatiladi
+- **Stabilite** - Bot barqaror ishlaydi
+
+### 🔧 Texnik Yangilanishlar
+- **Error handling** - Xatoliklar to'g'ri qayta ishlash
+- **Code cleanup** - Kod tozalash va optimizatsiya
+- **State management** - Holat boshqaruvi yaxshilandi
+- **User experience** - Foydalanuvchi tajribasi yaxshilandi
+
+## [v0.9.50] - 2025-01-27
+
+### 👤 Ism-Familya Ko'rsatish Muammosi Hal Qilindi
+- **To'liq ism ko'rsatish** - /start va /menu komandalarida ism-familya to'liq ko'rsatiladi
+- **Profil sinxronlash** - Profil bo'limida kiritilgan ism-familya barcha joylarda ko'rsatiladi
+- **UserService yangilanishi** - get_full_name() funksiyasi qo'shildi
+- **Avtomatik ism birlashtirish** - first_name va last_name ni birlashtirish
+
+### 🎯 Foydalanuvchi Tajribasi Yaxshilandi
+- **Shaxsiylashtirilgan xabar** - Har bir foydalanuvchi uchun to'liq ism bilan salomlashish
+- **Dashboard ko'rsatkichi** - Asosiy menyuda to'liq ism ko'rsatiladi
+- **Profil ma'lumotlari** - Barcha joylarda bir xil ism ko'rsatiladi
+- **Avtomatik yangilanish** - Profil o'zgartirilganda barcha joylarda yangilanadi
+
+### 🔧 Texnik Yangilanishlar
+- **get_full_name() funksiyasi** - UserService ga yangi funksiya qo'shildi
+- **Priority system** - UserSettings full_name > User first_name+last_name > "Foydalanuvchi"
+- **Error handling** - Ism topilmasa default qiymat qaytarish
+- **Database optimization** - Samarali so'rovlar
+
+### 📱 Interfeys Yangilanishi
+- **Start command** - Yangi foydalanuvchilar uchun to'liq ism bilan salomlashish
+- **Menu command** - Dashboard da to'liq ism ko'rsatish
+- **Consistent naming** - Barcha joylarda bir xil ism format
+- **User-friendly** - Foydalanuvchi uchun tushunarli va shaxsiy
+
 ## [v0.9.36] - 2025-01-27
 
 ### 🔧 Muhim Xatoliklar Tuzatilishi

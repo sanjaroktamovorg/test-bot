@@ -61,6 +61,28 @@ class MessageHandlers:
         elif text in ["📷 Profil rasmi", "👨‍🏫 Ism-familya", "👨‍🎓 Ism-familya", "🎂 Yosh", "📝 Haqida", "💼 Tajriba", "📚 Mutaxassislik fani"]:
             await self.handle_profile_edit_field(update, context, text)
         elif text == "🔙 Orqaga":
+            # Agar test qidirish holatida bo'lsa, uni to'xtatish
+            if context.user_data.get('searching_test'):
+                context.user_data['searching_test'] = False
+            
+            # Agar test yaratish holatida bo'lsa, uni to'xtatish
+            if context.user_data.get('creating_test'):
+                context.user_data['creating_test'] = False
+                context.user_data['test_creation_step'] = None
+                context.user_data['test_data'] = {}
+            
+            # Agar test ishlash holatida bo'lsa, uni to'xtatish
+            if context.user_data.get('taking_test'):
+                context.user_data['taking_test'] = False
+                context.user_data['current_test'] = None
+                context.user_data['current_question'] = None
+                context.user_data['answers'] = {}
+            
+            # Agar profil tahrirlash holatida bo'lsa, uni to'xtatish
+            if context.user_data.get('editing_profile'):
+                context.user_data['editing_profile'] = False
+                context.user_data['edit_field'] = None
+            
             await update.message.reply_text("🏠 Asosiy menyuga qaytdingiz.", reply_markup=KeyboardFactory.get_main_keyboard(user_role))
         elif context.user_data.get('creating_test'):
             # Test yaratish logikasi
@@ -965,6 +987,8 @@ class MessageHandlers:
     
     async def _handle_test_search(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
         """Test qidirish logikasi"""
+        user = update.effective_user
+        
         if text == '🔙 Orqaga':
             # Test qidirish holatini to'xtatish
             context.user_data['searching_test'] = False
@@ -1001,13 +1025,6 @@ class MessageHandlers:
             else:
                 # Ommaviy testlarni nom bo'yicha qidirish
                 await self._search_public_tests_by_title(update, context, text)
-                
-        except Exception as e:
-            user_role = await self.bot.user_service.get_user_role(user.id)
-            await update.message.reply_text(
-                f"❌ Qidirishda xatolik yuz berdi: {str(e)}",
-                reply_markup=KeyboardFactory.get_back_keyboard(user_role)
-            )
                 
         except Exception as e:
             user_role = await self.bot.user_service.get_user_role(user.id)

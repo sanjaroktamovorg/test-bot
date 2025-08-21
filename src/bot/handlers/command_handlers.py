@@ -13,6 +13,9 @@ class CommandHandlers:
         """Start komandasi"""
         user = update.effective_user
         
+        # Barcha jarayonlarni bekor qilish
+        context.user_data.clear()
+        
         # Foydalanuvchini tekshirish
         db_user = await self.bot.user_service.get_user_by_telegram_id(user.id)
         
@@ -26,8 +29,11 @@ class CommandHandlers:
             )
             
             if db_user:
+                # To'liq ismni olish
+                full_name = await self.bot.user_service.get_full_name(user.id)
+                
                 welcome_text = f"""
-🎓 Test Bot ga xush kelibsiz, {user.first_name}!
+🎓 Test Bot ga xush kelibsiz, {full_name}!
 
 Bu bot orqali:
 📝 O'qituvchilar testlar tuzishi
@@ -93,10 +99,13 @@ Iltimos, rolingizni tanlang:
         role_text = "👨‍🏫 O'qituvchi" if user_role == UserRole.TEACHER else "👨‍🎓 O'quvchi"
         dashboard_title = "O'qituvchi Dashboard" if user_role == UserRole.TEACHER else "O'quvchi Dashboard"
         
+        # To'liq ismni olish
+        full_name = await self.bot.user_service.get_full_name(user.id)
+        
         menu_text = f"""
 🏠 {dashboard_title}
 
-👤 Foydalanuvchi: {user.first_name}
+👤 Foydalanuvchi: {full_name}
 🎭 Rol: {role_text}
 🆔 Telegram ID: {user.id}
 
@@ -111,16 +120,16 @@ Quyidagi tugmalardan birini tanlang:
         version_text = """
 🤖 Test Bot - Versiya ma'lumotlari
 
-📋 Versiya: v0.9.36
+📋 Versiya: v0.9.51
 📅 Yangilangan: 2025-01-27
 👨‍💻 Developer: Test Bot Team
 
 🆕 So'nggi o'zgarishlar:
-• 🔧 Muhim xatoliklar tuzatildi
-• 🎯 Inline keyboard xatoliklari bartaraf etildi
-• 📱 Callback handler xatoliklari tuzatildi
-• 🗄️ Database schema xatoliklari bartaraf etildi
-• ⚡ Bot jarayonlari konflikti hal qilindi
+• 🔍 Test qidirish jarayoni to'g'ri ishlaydi
+• 🚫 /start komandasi barcha jarayonlarni bekor qiladi
+• 🔙 "Orqaga" tugmasi test qidirishni to'xtatadi
+• ⚡ Context user_data tozalash tizimi qo'shildi
+• 🎯 Barcha jarayonlar to'g'ri boshqariladi
 
 🔧 Texnik ma'lumotlar:
 • Python 3.10+

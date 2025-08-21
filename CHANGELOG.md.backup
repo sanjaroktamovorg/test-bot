@@ -1,88 +1,660 @@
 # Test Bot - Changelog
 
-## [v0.6] - 2025-08-20
+## [v0.9.50] - 2025-01-27
 
-### ✅ Qo'shilgan funksiyalar
-- **Test turlari tizimi** - 4 xil test turi
-  - 📝 Oddiy test (to'liq ishlaydi)
-  - 🏛️ DTM test (ishlab chiqilmoqda)
-  - 🏆 Milliy sertifikat test (ishlab chiqilmoqda)
-  - 📖 Ochiq (variantsiz) test (ishlab chiqilmoqda)
+### 👤 Ism-Familya Ko'rsatish Muammosi Hal Qilindi
+- **To'liq ism ko'rsatish** - /start va /menu komandalarida ism-familya to'liq ko'rsatiladi
+- **Profil sinxronlash** - Profil bo'limida kiritilgan ism-familya barcha joylarda ko'rsatiladi
+- **UserService yangilanishi** - get_full_name() funksiyasi qo'shildi
+- **Avtomatik ism birlashtirish** - first_name va last_name ni birlashtirish
 
-- **Test toifalari** - 10 xil toifa
-  - 📐 Matematika, ⚡ Fizika
-  - 🧪 Kimyo, 🌿 Biologiya
-  - 📚 Tarix, 🌍 Geografiya
-  - 📖 Adabiyot, 🗣️ Til
-  - 💻 Informatika, 📋 Boshqa
+### 🎯 Foydalanuvchi Tajribasi Yaxshilandi
+- **Shaxsiylashtirilgan xabar** - Har bir foydalanuvchi uchun to'liq ism bilan salomlashish
+- **Dashboard ko'rsatkichi** - Asosiy menyuda to'liq ism ko'rsatiladi
+- **Profil ma'lumotlari** - Barcha joylarda bir xil ism ko'rsatiladi
+- **Avtomatik yangilanish** - Profil o'zgartirilganda barcha joylarda yangilanadi
 
-- **Yangi test yaratish jarayoni**
-  - Test turi tanlash (Reply keyboard)
-  - Test toifasi tanlash (Reply keyboard)
-  - Test ma'lumotlari kiritish
-  - Avtomatik test yaratish
+### 🔧 Texnik Yangilanishlar
+- **get_full_name() funksiyasi** - UserService ga yangi funksiya qo'shildi
+- **Priority system** - UserSettings full_name > User first_name+last_name > "Foydalanuvchi"
+- **Error handling** - Ism topilmasa default qiymat qaytarish
+- **Database optimization** - Samarali so'rovlar
 
-- **Reply Keyboard Markup**
-  - O'qituvchilar uchun asosiy tugmalar
-  - O'quvchilar uchun asosiy tugmalar
-  - Test turi va toifasi tanlash tugmalari
+### 📱 Interfeys Yangilanishi
+- **Start command** - Yangi foydalanuvchilar uchun to'liq ism bilan salomlashish
+- **Menu command** - Dashboard da to'liq ism ko'rsatish
+- **Consistent naming** - Barcha joylarda bir xil ism format
+- **User-friendly** - Foydalanuvchi uchun tushunarli va shaxsiy
 
-### 🔧 Texnik o'zgarishlar
-- Yangi modellar qo'shildi: `TestType`, `TestCategory`
-- `TestCreationService` yangilandi
-- Bot handerlari qayta yozildi
-- Database strukturasi yangilandi
+## [v0.9.36] - 2025-01-27
 
-### 🐛 Tuzatilgan xatoliklar
-- Indentation xatoliklari tuzatildi
-- Import xatoliklari bartaraf etildi
-- Database yaratish muammolari hal qilindi
+### 🔧 Muhim Xatoliklar Tuzatilishi
+- **IndentationError tuzatildi** - command_handlers.py faylidagi syntax xatolik
+- **Inline keyboard xatoliklari** - callback_handlers.py dagi "Inline keyboard expected" xatolik
+- **Database schema xatoliklari** - SQLite jadvallarining to'g'ri yaratilishi
+- **Bot jarayonlari konflikti** - ko'p bot instance ishlash muammosi hal qilindi
 
-### 📁 Fayl strukturasi
-```
-src/
-├── models/
-│   ├── test_types.py (YANGI)
-│   ├── user.py
-│   ├── test.py (yangilandi)
-│   └── result.py
-├── services/
-│   ├── test_creation_service.py (yangilandi)
-│   ├── test_taking_service.py
-│   └── user_service.py
-└── bot/
-    └── bot.py (qayta yozildi)
-```
+### 🎯 Callback Handler Yangilanishi
+- **back_to_menu_callback** - InlineKeyboardMarkup bilan to'g'ri ishlash
+- **main_menu_callback** - Yangi callback handler qo'shildi
+- **change_role_cancel_callback** - Inline keyboard bilan ishlash
 
-## [v0.5] - 2025-08-20
+### 📱 Interfeys Yaxshilanishi
+- **Xatolik xabarlari** - Aniq va tushunarli xatolik xabarlari
+- **Navigatsiya** - To'g'ri callback tugmalar bilan ishlash
+- **Stabilite** - Bot barqaror ishlash
 
-### ✅ Qo'shilgan funksiyalar
-- Asosiy bot strukturasi
-- Database modellar
-- User va Test servislari
-- Reply keyboard va inline buttonlar
+### 🔧 Texnik Yangilanishlar
+- **Error handling** - Xatoliklarni to'g'ri qayta ishlash
+- **Code cleanup** - Kod tozalash va optimizatsiya
+- **Performance** - Bot ishlash tezligi yaxshilandi
 
-## [v0.1] - 2025-08-20
+## [v0.9.35] - 2025-01-27
 
-### ✅ Qo'shilgan funksiyalar
-- Loyiha asosiy strukturasi
-- Telegram bot integratsiyasi
-- SQLAlchemy database
-- Git versiya boshqaruvi
+### 🔐 Shaxsiy Test Tizimi va Qidiruv Yangilanishi
+- **Shaxsiy test uchun maxsus raqam** - 6 xonali raqam + 2 ta harf formatida
+- **Test ulashish havolasi** - Maxsus URL yaratish va ko'rsatish
+- **Test nomi unique validatsiyasi** - Bir o'qituvchi uchun unique nom talabi
+- **Xatolik xabarlari** - Nom takrorlanishida aniq xabar berish
+
+### 🔍 Qidiruv Tizimi Yangilanishi
+- **Shaxsiy testlar** - Faqat maxsus raqam orqali topish mumkin
+- **Ommaviy testlar** - Nom bo'yicha qidirish va sahifalash
+- **10 talik sahifalash** - Ko'p natijalarda navigatsiya
+- **Navigatsiya tugmalari** - "Oldingi" va "Keyingi" sahifalar
+
+### 📊 Yangi Funksiyalar
+- **check_test_title_unique()** - Test nomi unique tekshirish
+- **generate_test_code()** - Maxsus test kodi yaratish
+- **search_public_tests_by_title()** - Ommaviy testlar qidirish
+- **count_public_tests_by_title()** - Qidiruv natijalari soni
+- **_show_single_test_result()** - Bitta test ko'rsatish
+- **_search_public_tests_by_title()** - Sahifalash bilan qidirish
+
+### 🎯 Foydalanuvchi Tajribasi
+- **Test yaratishda xatoliklar** - Nom takrorlanishida qayta kiritish
+- **Qidiruv natijalari** - Sahifa ma'lumotlari va navigatsiya
+- **Test ma'lumotlari** - Shaxsiy test uchun maxsus ma'lumotlar
+- **Ulashish imkoniyati** - Maxsus havola orqali test ulashish
+
+### 📱 Interfeys
+- **Sahifalash ko'rsatkichlari** - Sahifa raqami va natijalar soni
+- **Navigatsiya tugmalari** - Oson sahifalar orasida o'tish
+- **Test boshlash tugmalari** - To'g'ridan-to'g'ri test boshlash
+- **Qayta qidirish** - Yangi qidiruv boshlash imkoniyati
+
+### 🔧 Texnik Yangilanishlar
+- **Database validatsiya** - Unique constraint tekshirish
+- **Error handling** - Xatoliklar to'g'ri qayta ishlash
+- **Callback handlers** - Yangi sahifa navigatsiyasi
+- **Service methods** - Yangi qidiruv va validatsiya metodlari
+
+## [v0.9.34] - 2025-01-27
+
+### 🎯 Inline Button Test Javoblari Tizimi
+- **Inline button orqali javob tanlash** - A, B, C, D variantlari tugmalar orqali
+- **Sahifalash tizimi** - 10 talik guruhlar bo'lib savollarni ko'rsatish
+- **Tanlangan javoblar belgilanadi** - ✅ belgi bilan vizual ko'rsatish
+- **Eski usulni saqlash** - Matn orqali javob berish ham mumkin
+- **Foydalanuvchi tanlovi** - Qaysi usulni ishlatishni o'zi hal qiladi
+
+### 📱 Yangi Inline Funksiyalar
+- **show_test_page()** - Sahifalash bilan test ko'rsatish
+- **handle_inline_answer()** - Inline javoblarni qayta ishlash
+- **finish_inline_test()** - Inline test tugatish
+- **switch_to_text_mode()** - Matn usuliga o'tish
+- **Progress bar** - Real-time javob berilgan savollar ko'rsatkichi
+
+### 🎮 Foydalanuvchi Tajribasi
+- **2 xil test usuli** - Inline tugmalar yoki matn orqali
+- **Navigatsiya tugmalari** - "Keyingi 10 ta" va "Oldingi 10 ta"
+- **Vizual feedback** - Tanlangan javoblar darhol ko'rinadi
+- **Progressni kuzatish** - Nechta savolga javob berilgani ko'rsatiladi
+- **Testni tugatish** - Barcha javoblar berilgandan so'ng tugma faollashadi
+
+### 🔧 Texnik Yangiliklar
+- **Callback handlerlar** - Yangi inline callback funksiyalar
+- **Context ma'lumotlari** - inline_answers saqlash tizimi
+- **Answer mapping** - A,B,C,D dan answer_id ga o'tkazish
+- **Error handling** - To'liq xatoliklar boshqaruvi
+- **Backward compatibility** - Eski matn usuli saqlanib qoldi
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- Inline button test tizimi ishlayapti ✅
+- Sahifalash tizimi ishlayapti ✅
+- Eski matn usuli saqlanib qoldi ✅
+- Progress tracking ishlayapti ✅
 
 ---
 
-## Keyingi rejalar (v0.7+)
+## [v0.9.33] - 2025-01-27
 
-### 🚧 Ishlab chiqilmoqda
-- Test ishlash funksiyasi
-- Savollar qo'shish
-- Natija ko'rish
-- Reyting tizimi
+### ✅ Reyting bo'limi to'liq ishlab chiqildi
+- **4 xil reyting turi** - O'quvchilar uchun to'liq reyting tizimi
+- **O'rtacha ball bo'yicha** - Eng yaxshi o'rtacha ballga ega o'quvchilar
+- **Eng yaxshi natija** - Biror testda eng yaxshi natija qayd etganlar
+- **Eng faol o'quvchilar** - Ko'p test bajargan o'quvchilar
+- **O'z o'rnini ko'rish** - Har bir o'quvchi o'z reytingini ko'ra oladi
 
-### 📋 Rejalashtirilgan
-- DTM test turlari
-- Milliy sertifikat testlar
-- Ochiq testlar
-- Web sayt integratsiyasi
-- API endpointlar
+### 🏆 Reyting funksiyalari
+- **TOP 10 ro'yxati** - Har bir turda eng yaxshi 10 o'quvchi
+- **Medal emojilari** - 🥇🥈🥉 1-3 o'rinlar uchun
+- **Motivatsion xabarlar** - O'rin bo'yicha rag'batlantiruvchi xabarlar
+- **Statistika ko'rsatkichlari** - O'rtacha ball, testlar soni, eng yaxshi natija
+
+### 📊 Yangi metodlar
+- **get_top_students_by_average_score()** - O'rtacha ball bo'yicha
+- **get_top_students_by_best_score()** - Eng yaxshi natija bo'yicha
+- **get_top_students_by_tests_count()** - Testlar soni bo'yicha
+- **get_student_ranking_position()** - O'quvchining o'rnini hisoblash
+
+### 📱 Interfeys
+- **Reyting menyusi** - 4 ta asosiy tugma
+- **Navigatsiya** - Oson o'tish barcha reyting turlari orasida
+- **"Orqaga" tugmasi** - Asosiy menyuga qaytish
+- **Faqat o'quvchilar** - O'qituvchilar uchun cheklangan
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- Reyting bo'limi ishlayapti ✅
+- Barcha reyting turlari mavjud ✅
+- O'quvchilar o'z o'rnini ko'ra oladi ✅
+
+---
+
+## [v0.9.32] - 2025-01-27
+
+### ✅ "Orqaga" tugmasi to'liq yangilandi
+- **Eski tugmalar olib tashlandi** - Eski asosiy tugmalar to'plami to'liq olib tashlandi
+- **Yangi minimal menyu** - Yangi soddalashtirilgan menyu bilan almashtirildi
+- **Barcha "Orqaga" tugmalari** - Endi barcha "Orqaga" tugmalari yangi menyuga qaytadi
+- **Foydalanuvchi tajribasi** - Yaxshilangan va optimallashtirilgan
+
+### 🔧 Yangi funksiyalar
+- **get_back_keyboard()** - Foydalanuvchi roliga qarab asosiy menyuga qaytish
+- **Profil tahrirlash** - "Orqaga" tugmasi asosiy menyuga qaytadi
+- **Test qidirish** - Xatolikda asosiy menyuga qaytish
+- **Barcha funksiyalar** - Yangi minimal menyu bilan ishlaydi
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- "Orqaga" tugmasi yangilandi ✅
+- Eski tugmalar olib tashlandi ✅
+- Yangi menyu bilan ishlaydi ✅
+
+---
+
+## [v0.9.31] - 2025-01-27
+
+### ✅ Asosiy menular soddalashtirildi
+- **O'quvchilar menyusi** - Faqat kerakli tugmalar qoldirildi
+- **O'qituvchilar menyusi** - Minimal va samimiy interfeys
+- **Ortiqcha tugmalar** - "Yordam" va "O'quvchilar" olib tashlandi
+- **Foydalanuvchi tajribasi** - Yaxshilangan va optimallashtirilgan
+
+### 🔧 Yangi menyu tuzilishi
+- **O'quvchilar:**
+  - 📝 Mavjud testlar | 📊 Mening natijalarim
+  - 🏆 Reyting | ⚙️ Sozlamalar
+
+- **O'qituvchilar:**
+  - 📝 Test yaratish | 📋 Mening testlarim
+  - 📊 Natijalar | ⚙️ Sozlamalar
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- Menular soddalashtirildi ✅
+- Foydalanuvchi tajribasi yaxshilandi ✅
+- Interfeys optimallashtirildi ✅
+
+---
+
+## [v0.9.30] - 2025-01-27
+
+### ✅ Profil rasmini qabul qilish va ko'rsatish funksiyasi qo'shildi
+- **Rasm qabul qilish** - Profil rasmini yuklash va saqlash
+- **Profil ko'rishda rasm** - Saqlangan rasm profil ko'rishda ko'rsatiladi
+- **Yordamchi hisobotlar** - Barcha profil maydonlari uchun ma'lumot
+- **Xatoliklar tuzatildi** - Rasm qabul qilishda xatoliklar bartaraf etildi
+
+### 🔧 Yangi funksiyalar
+- **handle_photo()** - Rasm qabul qilish va saqlash
+- **Profil ko'rishda rasm** - reply_photo() bilan rasm ko'rsatish
+- **Yordamchi hisobotlar** - Har bir maydon uchun ma'lumot
+- **Rasm validatsiyasi** - Rasm mavjudligini tekshirish
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- Profil rasmi qabul qilinadi ✅
+- Profil ko'rishda rasm ko'rsatiladi ✅
+- Yordamchi hisobotlar ishlaydi ✅
+
+---
+
+## [v0.9.29] - 2025-01-27
+
+### ✅ Database schemasi yangilandi va xatoliklar tuzatildi
+- **Database yangilandi** - user_settings jadvaliga yangi ustunlar qo'shildi
+- **Sozlamalar tugmasi tuzatildi** - endi to'liq ishlaydi
+- **O'quvchilar menyusi** - "O'quv materiallari" tugmasi olib tashlandi
+- **Profil funksiyalari** - to'liq test qilindi va ishlaydi
+
+### 🔧 Database o'zgarishlari
+- **user_settings jadvaliga qo'shildi:**
+  - profile_photo (TEXT)
+  - full_name (TEXT)
+  - age (INTEGER)
+  - about (TEXT)
+  - experience (INTEGER)
+  - specialization (TEXT)
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- Database yangilangan ✅
+- Sozlamalar tugmasi ishlaydi ✅
+- O'quvchilar menyusi soddalashtirildi ✅
+
+---
+
+## [v0.9.28] - 2025-01-27
+
+### ✅ Profil ma'lumotlari to'liq funksional qilindi
+- **Bazaga saqlash** - Profil ma'lumotlari UserSettings jadvaliga saqlanadi
+- **Profil ko'rish** - Barcha kiritilgan ma'lumotlar profil ko'rishda ko'rsatiladi
+- **O'quvchilar uchun** - Rasm kiritish funksiyasi olib tashlandi
+- **Ma'lumotlar validatsiyasi** - Yosh va tajriba uchun cheklovlar
+
+### 🔧 Texnik o'zgarishlar
+- **UserSettings modeli yangilandi** - Profil maydonlari qo'shildi:
+  - profile_photo (profil rasmi URL)
+  - full_name (to'liq ism-familya)
+  - age (yosh)
+  - about (haqida)
+  - experience (tajriba)
+  - specialization (mutaxassislik)
+- **UserService yangilandi** - Profil ma'lumotlarini saqlash va olish metodlari
+- **Message handlers yangilandi** - Profil tahrirlash va ko'rish funksiyalari
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- Profil ma'lumotlari saqlanadi ✅
+- Profil ko'rish to'liq ishlaydi ✅
+- O'quvchilar uchun rasm kiritish yo'q ✅
+
+---
+
+## [v0.9.27] - 2025-01-27
+
+### ✅ Profil tugmasi tuzatildi va asosiy menyu soddalashtirildi
+- **Profil tugmasi olib tashlandi** - Asosiy menyudan profil tugmasi olib tashlandi
+- **Sozlamalar ichida qoldirildi** - Profil faqat sozlamalar bo'limida
+- **TestService statistika metodlari** - Yo'q bo'lgan metodlar qo'shildi
+- **Xatoliklar tuzatildi** - Profil funksiyalari to'liq ishlaydi
+
+### 🔧 Texnik o'zgarishlar
+- **KeyboardFactory yangilandi** - Asosiy menyudan profil tugmasi olib tashlandi
+- **TestService to'ldirildi** - Statistika metodlari qo'shildi:
+  - get_teacher_tests_count
+  - get_teacher_active_tests_count  
+  - get_teacher_total_results
+  - get_student_completed_tests_count
+  - get_student_average_score
+  - get_student_best_score
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- Profil funksiyasi ishlayapti ✅
+- Asosiy menyu soddalashtirildi ✅
+- Barcha statistikalar ishlayapti ✅
+
+---
+
+## [v0.9.26] - 2025-01-27
+
+### ✅ Profil tugmasi ishlaydigan qilindi
+- **Asosiy menyuga qo'shildi** - Profil tugmasi har ikki foydalanuvchi turi uchun
+- **Profil tahrirlash funksiyasi** - O'quvchilar va o'qituvchilar uchun alohida maydonlar
+- **Ma'lumotlar validatsiyasi** - Yosh va tajriba uchun cheklovlar
+- **Interaktiv tahrirlash** - Har bir maydon uchun alohida oynalar
+
+### 🎯 Yangi funksiyalar
+- **👤 Profil tugmasi** - Asosiy menyuda profil ko'rish
+- **✏️ Profil tahrirlash** - Shaxsiy ma'lumotlarni kiritish va yangilash
+- **O'quvchilar uchun** - Fotosurat, ism-familya, yosh
+- **O'qituvchilar uchun** - Fotosurat, ism-familya, yosh, haqida, tajriba, mutaxassislik fani
+
+### 🔧 Texnik o'zgarishlar
+- **KeyboardFactory yangilandi** - Asosiy menyuga profil tugmasi qo'shildi
+- **Message handlers yangilandi** - Profil tahrirlash funksiyalari
+- **Validatsiya qo'shildi** - Yosh va tajriba uchun cheklovlar
+- **Sozlamalar paneli** - "Tema" olib tashlandi
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- Profil tugmasi ishlayapti ✅
+- Profil tahrirlash ishlayapti ✅
+- Validatsiya ishlayapti ✅
+
+### 🎯 Afzalliklari
+- **Qulaylik** - Profil ma'lumotlarini oson kiritish
+- **Xavfsizlik** - Ma'lumotlar validatsiyasi
+- **Aniqlik** - Har bir foydalanuvchi turi uchun alohida maydonlar
+- **Soddalik** - Interaktiv va tushunarli interfeys
+
+---
+
+## [v0.9.25] - 2025-01-27
+
+### ✅ Sozlamalar paneli soddalashtirildi
+- **Barcha foydalanuvchilar uchun bir xil tugmalar** - O'qituvchi va o'quvchi uchun bir xil sozlamalar
+- **Soddalashtirilgan tugmalar** - Profil, Til o'zgartirish, Bildirishnomalar, Orqaga
+- **Tema o'zgartirish olib tashlandi** - Hozircha kerak emas
+
+### 🎯 Yangi funksiyalar
+- **👤 Profil tugmasi** - Foydalanuvchi profil ma'lumotlari va statistikasi
+- **📊 Batafsil statistika** - Har bir foydalanuvchi turiga qarab batafsil statistika
+- **/ver komandasi** - Bot versiyasi va texnik ma'lumotlarni ko'rsatish
+
+### 🔧 Texnik o'zgarishlar
+- **F-string xatoliklari tuzatildi** - Backslash muammolari hal qilindi
+- **Message handlers yangilandi** - Profil va statistika funksiyalari qo'shildi
+- **Command handlers yangilandi** - /ver komandasi qo'shildi
+- **Bot.py yangilandi** - /ver komandasi handler qo'shildi
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- Sozlamalar paneli soddalashtirildi ✅
+- Profil funksiyasi ishlayapti ✅
+- /ver komandasi ishlayapti ✅
+
+### 🎯 Afzalliklari
+- **Soddalik** - Barcha foydalanuvchilar uchun bir xil sozlamalar
+- **Qulaylik** - Profil ma'lumotlari va statistika ko'rish
+- **Aniqlik** - Bot versiyasi va texnik ma'lumotlar
+- **Xavfsizlik** - F-string xatoliklari tuzatildi
+
+---
+
+## [v0.9.5] - 2025-08-20
+
+### ✅ Test yaratish jarayoni to'liq soddalashtirildi
+- **ABCD format** - Test nomidan keyin to'g'ridan-to'g'ri ABCD formatida javoblar
+- **Soddalashtirilgan jarayon** - Faqat test turi, toifa, nom va ABCD javoblar
+- **100 tagacha savol** - Bir vaqtda 100 tagacha savol kiritish mumkin
+- **Avtomatik test yaratish** - ABCD formatini parse qilib test yaratish
+
+### 🎯 Yangi funksiyalar
+- **ABCD format parsing** - abcdabcd... yoki 1a2b3c4d... formatlarini qo'llab-quvvatlash
+- **Qisqa ma'lumotlar** - Mavjud testlar bo'limida qisqa ma'lumotlar
+- **Ommaviy test yaratish** - Ommaviy testlar yaratish muammosi hal qilindi
+- **Enum xatoliklari** - TestStatus va TestType enum xatoliklari tuzatildi
+
+### 🔧 Texnik o'zgarishlar
+- **TestCreationService** yangilandi - ABCD format parsing qo'shildi
+- **Message handlers** yangilandi - soddalashtirilgan test yaratish
+- **Database enum** tuzatildi - .value qo'shildi
+- **Error handling** yaxshilandi - xatoliklar to'g'ri ko'rsatiladi
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- Test yaratish jarayoni ✅
+- Ommaviy testlar yaratiladi ✅
+- ABCD format to'g'ri ishlayapti ✅
+
+### 🎯 Afzalliklari
+- **Tezlik** - Test yaratish juda tez va oson
+- **Qulaylik** - ABCD format bilan test yaratish
+- **Aniqlik** - Qisqa va tushunarli ma'lumotlar
+- **Xavfsizlik** - Xatoliklar to'g'ri boshqariladi
+
+---
+
+## [v0.9.4] - 2025-08-20
+
+### ✅ Test yaratish jarayoni soddalashtirildi
+- **Soddalashtirilgan jarayon** - Faqat kerakli sozlamalar so'raladi
+- **Test nomi** - Test nomini kiritish
+- **Savollar soni** - Testdagi savollar sonini belgilash
+- **Savol va javoblar** - Har bir savol va javob variantlarini kiritish
+
+### 🎯 Yangi funksiyalar
+- **Test turi tanlash** - Oddiy test, DTM, Milliy sertifikat, Ochiq test
+- **Test toifasi** - Ommaviy va shaxsiy testlar
+- **Savollar qo'shish** - Testga savol va javoblar qo'shish
+- **Avtomatik test yaratish** - Barcha savollar kiritilgandan keyin
+
+### 🔧 Texnik o'zgarishlar
+- **TestCreationService** qayta yozildi
+- **Message handlers** yangilandi
+- **Multi-step conversation** soddalashtirildi
+- **Database modellar** to'g'rilandi
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- Test yaratish jarayoni ✅
+- Database to'g'ri ishlayapti ✅
+- Telegram API bilan bog'lanish ✅
+
+---
+
+## [v0.9.3] - 2025-08-20
+
+### ✅ Har bir foydalanuvchi uchun alohida sozlamalar
+- **UserSettings modeli** - Har bir foydalanuvchi uchun alohida sozlamalar
+- **Telegram ID asosida** - Har bir akkaunt uchun alohida rol va sozlamalar
+- **Rol saqlash** - Har bir foydalanuvchi o'z roli bilan saqlanadi
+- **Sozlamalar saqlash** - Til, tema, bildirishnomalar va boshqa sozlamalar
+
+### �� Yangi funksiyalar
+- **Dashboard ko'rsatish** - Ro'yxatdan o'tgandan keyin to'g'ridan-to'g'ri dashboard
+- **Rol tanlash** - O'qituvchi yoki o'quvchi sifatida ro'yxatdan o'tish
+- **Sozlamalar paneli** - Foydalanuvchi sozlamalarini ko'rish va o'zgartirish
+- **Alohida ma'lumotlar** - Har bir foydalanuvchi o'z testlari va natijalari bilan
+
+### 🔧 Texnik o'zgarishlar
+- **UserSettings modeli** qo'shildi
+- **UserService** yangilandi - har bir foydalanuvchi uchun alohida
+- **Callback handerlari** yangilandi - dashboard ko'rsatish
+- **Command handerlari** yangilandi - to'g'ridan-to'g'ri dashboard
+- **Database strukturasi** yangilandi
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- Har bir foydalanuvchi alohida ✅
+- Database to'g'ri ishlayapti ✅
+- Telegram API bilan bog'lanish ✅
+
+### 🎯 Afzalliklari
+- **Xavfsizlik** - Har bir foydalanuvchi o'z ma'lumotlari bilan
+- **Qulaylik** - Ro'yxatdan o'tgandan keyin to'g'ridan-to'g'ri dashboard
+- **Aniqlik** - Har bir foydalanuvchi o'z roli va sozlamalari bilan
+- **Kengaytirish** - Yangi sozlamalar oson qo'shiladi
+
+---
+
+## [v0.9.2] - 2025-08-20
+
+### ✅ Test yaratish jarayoni soddalashtirildi
+- **Soddalashtirilgan jarayon** - Faqat kerakli sozlamalar so'raladi
+- **Test nomi** - Test nomini kiritish
+- **Savollar soni** - Testdagi savollar sonini belgilash
+- **Savol va javoblar** - Har bir savol va javob variantlarini kiritish
+
+### 🎯 Yangi funksiyalar
+- **Test turi tanlash** - Oddiy test, DTM, Milliy sertifikat, Ochiq test
+- **Test toifasi** - Ommaviy va shaxsiy testlar
+- **Savollar qo'shish** - Testga savol va javoblar qo'shish
+- **Avtomatik test yaratish** - Barcha savollar kiritilgandan keyin
+
+### �� Texnik o'zgarishlar
+- **TestCreationService** qayta yozildi
+- **Message handlers** yangilandi
+- **Multi-step conversation** soddalashtirildi
+- **Database modellar** to'g'rilandi
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- Test yaratish jarayoni ✅
+- Database to'g'ri ishlayapti ✅
+- Telegram API bilan bog'lanish ✅
+
+---
+
+## [v0.9.1] - 2025-08-20
+
+### ✅ Test yaratish jarayoni soddalashtirildi
+- **Soddalashtirilgan jarayon** - Faqat kerakli sozlamalar so'raladi
+- **Test nomi** - Test nomini kiritish
+- **Savollar soni** - Testdagi savollar sonini belgilash
+- **Savol va javoblar** - Har bir savol va javob variantlarini kiritish
+
+### 🎯 Yangi funksiyalar
+- **Test turi tanlash** - Oddiy test, DTM, Milliy sertifikat, Ochiq test
+- **Test toifasi** - Ommaviy va shaxsiy testlar
+- **Savollar qo'shish** - Testga savol va javoblar qo'shish
+- **Avtomatik test yaratish** - Barcha savollar kiritilgandan keyin
+
+### 🔧 Texnik o'zgarishlar
+- **TestCreationService** qayta yozildi
+- **Message handlers** yangilandi
+- **Multi-step conversation** soddalashtirildi
+- **Database modellar** to'g'rilandi
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- Test yaratish jarayoni ✅
+- Database to'g'ri ishlayapti ✅
+- Telegram API bilan bog'lanish ✅
+
+---
+
+## [v0.9] - 2025-08-20
+
+### ✅ Database yangilandi
+- **Yangi ustunlar qo'shildi** - test_type, category, subject, test_code
+- **Database jadvali qayta yaratildi** - Yangi schema bilan
+- **Test turi tizimi** - SIMPLE, DTM, NATIONAL_CERTIFICATE, OPEN
+- **Test toifasi** - PUBLIC, PRIVATE
+- **Maxsus kod tizimi** - Shaxsiy testlar uchun
+
+### 🔧 Texnik o'zgarishlar
+- Database migration to'liq amalga oshirildi
+- Yangi modellar to'g'ri ishlayapti
+- Bot polling rejimida ishlayapti
+- Xatoliklar bartaraf etildi
+
+### 🎯 Yangi funksiyalar
+- **Test turi tanlash** - Oddiy test, DTM, Milliy sertifikat, Ochiq test
+- **Test toifasi** - Ommaviy va shaxsiy testlar
+- **Maxsus kod** - Shaxsiy testlar uchun maxsus kod
+- **Fan tanlash** - Test uchun fan belgilash
+
+### 📊 Holat
+- Bot to'liq ishlayapti ✅
+- Database to'g'ri ishlayapti ✅
+- Modullar to'g'ri ishlayapti ✅
+- Telegram API bilan bog'lanish ✅
+
+---
+
+## [v0.8.1] - 2025-08-20
+
+### ✅ Arxitektura qayta tuzildi
+- **Bot modullarga ajratildi** - Katta fayl kichik modullarga bo'lindi
+- **Keyboard Factory** - Barcha keyboardlar alohida modulda
+- **Handler modullari** - Command, Message, Callback handerlari alohida
+- **Kod tuzilishi** - Toza va tushunarli arxitektura
+
+### 📁 Yangi fayl strukturasi
+```
+src/bot/
+├── keyboards/
+│   ├── __init__.py
+│   └── keyboard_factory.py
+├── handlers/
+│   ├── __init__.py
+│   ├── command_handlers.py
+│   ├── message_handlers.py
+│   └── callback_handlers.py
+└── bot.py (asosiy fayl)
+```
+
+### 🔧 Texnik o'zgarishlar
+- Bot fayli 631 qatordan 91 qatorga qisqartirildi
+- Har bir handler alohida faylda
+- Keyboard yaratish factory pattern bilan
+- Import tizimi optimallashtirildi
+
+### 🎯 Afzalliklari
+- **Oson saqlash** - Har bir modul alohida
+- **Qayta ishlatish** - Modullar boshqa joyda ishlatilishi mumkin
+- **Testlash** - Har bir modul alohida testlash mumkin
+- **Kengaytirish** - Yangi funksiyalar oson qo'shiladi
+
+---
+
+## [v0.8.0] - 2025-08-20
+
+### ✅ Test yaratish tizimi qo'shildi
+- **Test turi tanlash** - Oddiy test, DTM, Milliy sertifikat, Ochiq test
+- **Test toifasi** - Ommaviy va shaxsiy testlar
+- **Fan tanlash** - Test uchun fan belgilash
+- **Test ma'lumotlari** - Nomi, tavsif, vaqt chegarasi
+
+### 🎯 Yangi funksiyalar
+- **Reply Keyboard Markup** - Asosiy menyu tugmalari
+- **Inline Keyboard** - Test variantlari uchun
+- **Multi-step conversation** - Test yaratish jarayoni
+- **Test kod yaratish** - Shaxsiy testlar uchun
+
+### 📊 Holat
+- Bot ishga tushdi ✅
+- Database ishlayapti ✅
+- Test yaratish jarayoni ✅
+- Telegram API bilan bog'lanish ✅
+
+---
+
+## [v0.7.0] - 2025-08-20
+
+### ✅ Asosiy tuzilma yaratildi
+- **Database modellar** - User, Test, Question, Answer, TestResult
+- **Service layer** - UserService, TestService, TestCreationService
+- **Bot framework** - python-telegram-bot
+- **Database** - SQLite with SQLAlchemy
+
+### 🎯 Asosiy funksiyalar
+- **Foydalanuvchi ro'yxatdan o'tish** - /register
+- **Asosiy menyu** - O'qituvchi/O'quvchi tanlash
+- **Database operatsiyalari** - CRUD operatsiyalari
+- **Logging** - Loguru bilan
+
+### �� Holat
+- Bot ishga tushdi ✅
+- Database ishlayapti ✅
+- Asosiy funksiyalar ✅
+- Telegram API bilan bog'lanish ✅
+
+---
+
+## [v0.6.0] - 2025-08-20
+
+### ✅ Loyiha asoslari yaratildi
+- **Loyiha strukturasi** - Modullarga ajratilgan
+- **Dependencies** - requirements.txt
+- **Environment** - .env.example
+- **Git repository** - Version control
+
+### 🎯 Asosiy komponentlar
+- **src/** - Asosiy kod papkasi
+- **models/** - Database modellar
+- **services/** - Business logic
+- **bot/** - Telegram bot
+- **database/** - Database connection
+
+### 📊 Holat
+- Loyiha strukturasi ✅
+- Dependencies ✅
+- Git repository ✅
+- README va dokumentatsiya ✅

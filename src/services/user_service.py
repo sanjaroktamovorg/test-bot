@@ -189,6 +189,29 @@ class UserService:
         finally:
             self.db.close_session(session)
     
+    async def get_full_name(self, telegram_id: int) -> str:
+        """Foydalanuvchining to'liq ismini olish"""
+        session = self.db.get_session()
+        try:
+            # Avval UserSettings dan full_name ni tekshirish
+            user_settings = session.query(UserSettings).filter(UserSettings.telegram_id == telegram_id).first()
+            if user_settings and user_settings.full_name:
+                return user_settings.full_name
+            
+            # Agar full_name yo'q bo'lsa, User jadvalidan first_name va last_name ni olish
+            user = session.query(User).filter(User.telegram_id == telegram_id).first()
+            if user:
+                if user.first_name and user.last_name:
+                    return f"{user.first_name} {user.last_name}"
+                elif user.first_name:
+                    return user.first_name
+                elif user.last_name:
+                    return user.last_name
+            
+            return "Foydalanuvchi"
+        finally:
+            self.db.close_session(session)
+    
     async def sync_user_roles(self) -> dict:
         """User va UserSettings jadvallaridagi rollarni sinxronlashtirish"""
         session = self.db.get_session()
