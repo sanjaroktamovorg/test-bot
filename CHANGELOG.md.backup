@@ -1,5 +1,58 @@
 # Test Bot - Changelog
 
+## [v0.9.52] - 2025-01-27
+
+### 🎯 Test Yaratish Inline Buttonlar Bilan
+- **Test turi tanlash** - Inline buttonlar orqali test turini tanlash
+- **Test toifasi tanlash** - Ommaviy/Shaxsiy test tanlash inline buttonlar
+- **Fan tanlash** - Matematika, Fizika, Kimyo va boshqa fanlar inline buttonlar
+- **Vaqt chegarasi** - 15, 30, 45, 60, 90 daqiqa tanlash inline buttonlar
+- **O'tish balli** - 50%, 60%, 70%, 80%, 90% tanlash inline buttonlar
+
+### 📝 Test Yaratish Jarayoni Soddalashtirildi
+- **Inline navigation** - Barcha tanlashlar inline buttonlar orqali
+- **Qulay interfeys** - O'qituvchilar uchun oson va tushunarli
+- **Orqaga qaytish** - Har bir bosqichda orqaga qaytish imkoniyati
+- **Test ma'lumotlari** - Yaratilgan test ma'lumotlari inline buttonlar bilan
+
+### 🎨 O'qituvchilar Uchun Qulay Interfeys
+- **Test turi** - 📝 Oddiy test, 🏛️ DTM test, 🏆 Milliy sertifikat test
+- **Fanlar** - 📐 Matematika, 🔬 Fizika, 🧪 Kimyo, 🌍 Tarix, 🌱 Biologiya
+- **Vaqtlar** - 15, 30, 45, 60, 90 daqiqa tanlash
+- **Ballar** - 50%, 60%, 70%, 80%, 90% o'tish balli
+
+### 🔧 Texnik Yangilanishlar
+- **Callback handlers** - Yangi test yaratish callback funksiyalari
+- **Inline keyboards** - Test yaratish uchun maxsus inline keyboardlar
+- **State management** - Test yaratish holatini to'g'ri boshqarish
+- **User experience** - O'qituvchilar uchun yaxshilangan tajriba
+
+## [v0.9.51] - 2025-01-27
+
+### 🔍 Test Qidirish Jarayoni Tuzatildi
+- **Test qidirish to'xtatish** - "🔙 Orqaga" tugmasi test qidirishni to'g'ri to'xtatadi
+- **Context tozalash** - /start komandasi barcha jarayonlarni bekor qiladi
+- **Jarayon boshqaruvi** - Barcha holatlar to'g'ri boshqariladi
+- **Xatolik tuzatish** - _handle_test_search da user o'zgaruvchisi aniqlanmagan xatolik
+
+### 🚫 Jarayon Bekor Qilish Tizimi
+- **/start komandasi** - Barcha jarayonlarni bekor qiladi va asosiy menyuga qaytaradi
+- **"Orqaga" tugmasi** - Test qidirish, test yaratish, test ishlash jarayonlarini to'xtatadi
+- **Context user_data** - Barcha holatlar tozalash tizimi qo'shildi
+- **Holat sinxronlash** - Barcha jarayonlar bir-biri bilan sinxronlashadi
+
+### 🎯 Foydalanuvchi Tajribasi Yaxshilandi
+- **Test qidirish** - Endi to'g'ri ishlaydi va to'xtatiladi
+- **Navigatsiya** - Barcha tugmalar to'g'ri ishlaydi
+- **Xatoliklar** - Xatolik xabarlari to'g'ri ko'rsatiladi
+- **Stabilite** - Bot barqaror ishlaydi
+
+### 🔧 Texnik Yangilanishlar
+- **Error handling** - Xatoliklar to'g'ri qayta ishlash
+- **Code cleanup** - Kod tozalash va optimizatsiya
+- **State management** - Holat boshqaruvi yaxshilandi
+- **User experience** - Foydalanuvchi tajribasi yaxshilandi
+
 ## [v0.9.50] - 2025-01-27
 
 ### 👤 Ism-Familya Ko'rsatish Muammosi Hal Qilindi

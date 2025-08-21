@@ -76,6 +76,27 @@ class CallbackHandlers:
             test_id = int(data.split("_")[3])
             await self.switch_to_text_mode(update, context, test_id)
         
+        # Test yaratish callbacks
+        elif data.startswith("create_test_type_"):
+            test_type = data.split("_")[3]
+            await self.handle_test_type_selection(update, context, test_type)
+        elif data.startswith("create_test_category_"):
+            category = data.split("_")[3]
+            await self.handle_test_category_selection(update, context, category)
+        elif data.startswith("create_test_subject_"):
+            subject = data.split("_")[3]
+            await self.handle_test_subject_selection(update, context, subject)
+        elif data.startswith("create_test_time_"):
+            time_limit = int(data.split("_")[3])
+            await self.handle_test_time_selection(update, context, time_limit)
+        elif data.startswith("create_test_score_"):
+            passing_score = int(data.split("_")[3])
+            await self.handle_test_score_selection(update, context, passing_score)
+        elif data == "create_test_finish":
+            await self.handle_test_finish(update, context)
+        elif data == "create_test_cancel":
+            await self.handle_test_cancel(update, context)
+        
         else:
             await query.edit_message_text("❌ Noma'lum callback!")
     
@@ -1135,3 +1156,182 @@ Asosiy menyuga o'tish uchun /menu buyrug'ini yuboring.
         """
         
         await query.edit_message_text(text_message)
+    
+    # Test yaratish callback funksiyalari
+    async def handle_test_type_selection(self, update: Update, context: ContextTypes.DEFAULT_TYPE, test_type: str):
+        """Test turi tanlash - inline button"""
+        query = update.callback_query
+        from src.models.test_types import TestType
+        
+        test_type_map = {
+            'simple': TestType.SIMPLE,
+            'dtm': TestType.DTM,
+            'national_cert': TestType.NATIONAL_CERT,
+            'open': TestType.OPEN
+        }
+        
+        if test_type in test_type_map:
+            context.user_data['test_data']['test_type'] = test_type_map[test_type].value
+            
+            if test_type == 'simple':
+                # Oddiy test uchun toifa tanlash
+                text = "📝 Oddiy test yaratish uchun toifani tanlang:"
+                keyboard = [
+                    [InlineKeyboardButton("🌍 Ommaviy test", callback_data="create_test_category_public")],
+                    [InlineKeyboardButton("🔒 Shaxsiy test", callback_data="create_test_category_private")]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                
+                await query.edit_message_text(text, reply_markup=reply_markup)
+            else:
+                # Boshqa test turlari uchun xabar
+                text = f"🚧 {test_type} yaratish funksiyasi ishlab chiqilmoqda!\n\nIltimos, oddiy test yaratishni sinab ko'ring."
+                keyboard = [
+                    [InlineKeyboardButton("🔙 Orqaga", callback_data="create_test_cancel")]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                
+                await query.edit_message_text(text, reply_markup=reply_markup)
+    
+    async def handle_test_category_selection(self, update: Update, context: ContextTypes.DEFAULT_TYPE, category: str):
+        """Test toifasi tanlash - inline button"""
+        query = update.callback_query
+        from src.models.test_types import TestCategory
+        
+        category_map = {
+            'public': TestCategory.PUBLIC,
+            'private': TestCategory.PRIVATE
+        }
+        
+        if category in category_map:
+            context.user_data['test_data']['category'] = category_map[category].value
+            
+            # Fan tanlash
+            text = "📚 Test fani uchun mutaxassislikni tanlang:"
+            keyboard = [
+                [InlineKeyboardButton("📐 Matematika", callback_data="create_test_subject_math")],
+                [InlineKeyboardButton("🔬 Fizika", callback_data="create_test_subject_physics")],
+                [InlineKeyboardButton("🧪 Kimyo", callback_data="create_test_subject_chemistry")],
+                [InlineKeyboardButton("🌍 Tarix", callback_data="create_test_subject_history")],
+                [InlineKeyboardButton("🌱 Biologiya", callback_data="create_test_subject_biology")],
+                [InlineKeyboardButton("🌐 Ingliz tili", callback_data="create_test_subject_english")],
+                [InlineKeyboardButton("📖 O'zbek tili", callback_data="create_test_subject_uzbek")],
+                [InlineKeyboardButton("🔙 Orqaga", callback_data="create_test_type_simple")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            await query.edit_message_text(text, reply_markup=reply_markup)
+    
+    async def handle_test_subject_selection(self, update: Update, context: ContextTypes.DEFAULT_TYPE, subject: str):
+        """Test fani tanlash - inline button"""
+        query = update.callback_query
+        
+        subject_map = {
+            'math': 'Matematika',
+            'physics': 'Fizika',
+            'chemistry': 'Kimyo',
+            'history': 'Tarix',
+            'biology': 'Biologiya',
+            'english': 'Ingliz tili',
+            'uzbek': 'O\'zbek tili'
+        }
+        
+        if subject in subject_map:
+            context.user_data['test_data']['subject'] = subject_map[subject]
+            
+            # Vaqt chegarasi tanlash
+            text = "⏱️ Test uchun vaqt chegarasini tanlang:"
+            keyboard = [
+                [InlineKeyboardButton("15 daqiqa", callback_data="create_test_time_15")],
+                [InlineKeyboardButton("30 daqiqa", callback_data="create_test_time_30")],
+                [InlineKeyboardButton("45 daqiqa", callback_data="create_test_time_45")],
+                [InlineKeyboardButton("60 daqiqa", callback_data="create_test_time_60")],
+                [InlineKeyboardButton("90 daqiqa", callback_data="create_test_time_90")],
+                [InlineKeyboardButton("🔙 Orqaga", callback_data="create_test_category_public")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            await query.edit_message_text(text, reply_markup=reply_markup)
+    
+    async def handle_test_time_selection(self, update: Update, context: ContextTypes.DEFAULT_TYPE, time_limit: int):
+        """Test vaqti tanlash - inline button"""
+        query = update.callback_query
+        
+        context.user_data['test_data']['time_limit'] = time_limit
+        
+        # O'tish balli tanlash
+        text = "🎯 Test uchun o'tish ballini tanlang:"
+        keyboard = [
+            [InlineKeyboardButton("50%", callback_data="create_test_score_50")],
+            [InlineKeyboardButton("60%", callback_data="create_test_score_60")],
+            [InlineKeyboardButton("70%", callback_data="create_test_score_70")],
+            [InlineKeyboardButton("80%", callback_data="create_test_score_80")],
+            [InlineKeyboardButton("90%", callback_data="create_test_score_90")],
+            [InlineKeyboardButton("🔙 Orqaga", callback_data="create_test_subject_math")]
+            ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await query.edit_message_text(text, reply_markup=reply_markup)
+    
+    async def handle_test_score_selection(self, update: Update, context: ContextTypes.DEFAULT_TYPE, passing_score: int):
+        """O'tish balli tanlash - inline button"""
+        query = update.callback_query
+        
+        context.user_data['test_data']['passing_score'] = passing_score
+        
+        # Test nomini kiritish so'raladi
+        text = "📝 Endi test nomini kiriting:\n\nMisol: Algebra testi, Fizika testi, Tarix testi..."
+        keyboard = [
+            [InlineKeyboardButton("🔙 Orqaga", callback_data="create_test_time_30")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await query.edit_message_text(text, reply_markup=reply_markup)
+        
+        # Test nomini kiritish holatini o'rnatish
+        context.user_data['creating_test'] = True
+        context.user_data['test_creation_step'] = 'enter_title'
+    
+    async def handle_test_finish(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Test yaratishni tugatish"""
+        query = update.callback_query
+        
+        # Test ma'lumotlarini ko'rsatish
+        test_data = context.user_data.get('test_data', {})
+        
+        text = f"""
+✅ Test ma'lumotlari tayyor!
+
+📝 Nomi: {test_data.get('title', 'Noma\'lum')}
+📚 Fan: {test_data.get('subject', 'Aniqlanmagan')}
+⏱️ Vaqt: {test_data.get('time_limit', 30)} daqiqa
+🎯 O'tish balli: {test_data.get('passing_score', 60)}%
+📂 Toifa: {'Ommaviy' if test_data.get('category') == 'public' else 'Shaxsiy'}
+
+Testni yaratishni xohlaysizmi?
+        """
+        
+        keyboard = [
+            [InlineKeyboardButton("✅ Testni yaratish", callback_data="create_test_confirm")],
+            [InlineKeyboardButton("❌ Bekor qilish", callback_data="create_test_cancel")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await query.edit_message_text(text, reply_markup=reply_markup)
+    
+    async def handle_test_cancel(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Test yaratishni bekor qilish"""
+        query = update.callback_query
+        
+        # Barcha test yaratish holatlarini tozalash
+        context.user_data['creating_test'] = False
+        context.user_data['test_creation_step'] = None
+        context.user_data['test_data'] = {}
+        
+        text = "❌ Test yaratish bekor qilindi."
+        keyboard = [
+            [InlineKeyboardButton("🏠 Asosiy menyu", callback_data="back_to_menu")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await query.edit_message_text(text, reply_markup=reply_markup)

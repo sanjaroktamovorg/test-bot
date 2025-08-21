@@ -143,7 +143,7 @@ class MessageHandlers:
             await update.message.reply_text("📷 Bu rasm qabul qilinmadi. Profil rasmini yuklash uchun '✏️ Profil tahrirlash' tugmasini bosing.")
     
     async def create_test_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Test yaratish komandasi - faqat o'qituvchilar uchun"""
+        """Test yaratish komandasi - faqat o'qituvchilar uchun - Inline buttonlar bilan"""
         user = update.effective_user
         user_role = await self.bot.user_service.get_user_role(user.id)
         
@@ -151,10 +151,17 @@ class MessageHandlers:
             await update.message.reply_text("❌ Bu funksiya faqat o'qituvchilar uchun!")
             return
         
-        await update.message.reply_text(
-            "📝 Test yaratish uchun avval test turini tanlang:",
-            reply_markup=KeyboardFactory.get_test_type_keyboard()
-        )
+        # Inline buttonlar bilan test turi tanlash
+        text = "📝 Test yaratish uchun avval test turini tanlang:"
+        keyboard = [
+            [InlineKeyboardButton("📝 Oddiy test", callback_data="create_test_type_simple")],
+            [InlineKeyboardButton("🏛️ DTM test", callback_data="create_test_type_dtm")],
+            [InlineKeyboardButton("🏆 Milliy sertifikat test", callback_data="create_test_type_national_cert")],
+            [InlineKeyboardButton("📖 Ochiq (variantsiz) test", callback_data="create_test_type_open")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await update.message.reply_text(text, reply_markup=reply_markup)
         context.user_data['creating_test'] = True
         context.user_data['test_creation_step'] = 'select_type'
         context.user_data['test_data'] = {}
@@ -662,12 +669,17 @@ class MessageHandlers:
             )
     
     async def _handle_test_title_entry(self, update: Update, context: ContextTypes.DEFAULT_TYPE, text: str, db_user):
-        """Test nomini kiritish"""
+        """Test nomini kiritish - Inline buttonlar bilan"""
         if text == '🔙 Orqaga':
-            await update.message.reply_text(
-                "📝 Test yaratish uchun toifani tanlang:",
-                reply_markup=KeyboardFactory.get_test_category_keyboard()
-            )
+            # Inline buttonlar bilan toifa tanlashga qaytish
+            text = "📝 Test yaratish uchun toifani tanlang:"
+            keyboard = [
+                [InlineKeyboardButton("🌍 Ommaviy test", callback_data="create_test_category_public")],
+                [InlineKeyboardButton("🔒 Shaxsiy test", callback_data="create_test_category_private")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            await update.message.reply_text(text, reply_markup=reply_markup)
             context.user_data['test_creation_step'] = 'select_category'
             return
         
@@ -738,10 +750,15 @@ class MessageHandlers:
                 
                 test_info += f"\n📋 Test \"Mening testlarim\" bo'limida ko'rinadi!"
                 
-                await update.message.reply_text(
-                    test_info,
-                    reply_markup=KeyboardFactory.get_main_keyboard(UserRole.TEACHER)
-                )
+                # Inline buttonlar bilan test ma'lumotlari
+                keyboard = [
+                    [InlineKeyboardButton("📋 Mening testlarim", callback_data="back_to_my_tests")],
+                    [InlineKeyboardButton("📝 Yangi test yaratish", callback_data="create_test_type_simple")],
+                    [InlineKeyboardButton("🏠 Asosiy menyu", callback_data="back_to_menu")]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                
+                await update.message.reply_text(test_info, reply_markup=reply_markup)
                 
                 context.user_data['creating_test'] = False
                 context.user_data['test_creation_step'] = None

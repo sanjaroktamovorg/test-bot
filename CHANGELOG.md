@@ -1,5 +1,32 @@
 # Test Bot - Changelog
 
+## [v0.9.52] - 2025-01-27
+
+### 🎯 Test Yaratish Inline Buttonlar Bilan
+- **Test turi tanlash** - Inline buttonlar orqali test turini tanlash
+- **Test toifasi tanlash** - Ommaviy/Shaxsiy test tanlash inline buttonlar
+- **Fan tanlash** - Matematika, Fizika, Kimyo va boshqa fanlar inline buttonlar
+- **Vaqt chegarasi** - 15, 30, 45, 60, 90 daqiqa tanlash inline buttonlar
+- **O'tish balli** - 50%, 60%, 70%, 80%, 90% tanlash inline buttonlar
+
+### 📝 Test Yaratish Jarayoni Soddalashtirildi
+- **Inline navigation** - Barcha tanlashlar inline buttonlar orqali
+- **Qulay interfeys** - O'qituvchilar uchun oson va tushunarli
+- **Orqaga qaytish** - Har bir bosqichda orqaga qaytish imkoniyati
+- **Test ma'lumotlari** - Yaratilgan test ma'lumotlari inline buttonlar bilan
+
+### 🎨 O'qituvchilar Uchun Qulay Interfeys
+- **Test turi** - 📝 Oddiy test, 🏛️ DTM test, 🏆 Milliy sertifikat test
+- **Fanlar** - 📐 Matematika, 🔬 Fizika, 🧪 Kimyo, 🌍 Tarix, 🌱 Biologiya
+- **Vaqtlar** - 15, 30, 45, 60, 90 daqiqa tanlash
+- **Ballar** - 50%, 60%, 70%, 80%, 90% o'tish balli
+
+### 🔧 Texnik Yangilanishlar
+- **Callback handlers** - Yangi test yaratish callback funksiyalari
+- **Inline keyboards** - Test yaratish uchun maxsus inline keyboardlar
+- **State management** - Test yaratish holatini to'g'ri boshqarish
+- **User experience** - O'qituvchilar uchun yaxshilangan tajriba
+
 ## [v0.9.51] - 2025-01-27
 
 ### 🔍 Test Qidirish Jarayoni Tuzatildi

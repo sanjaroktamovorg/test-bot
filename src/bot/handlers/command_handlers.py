@@ -120,16 +120,16 @@ Quyidagi tugmalardan birini tanlang:
         version_text = """
 🤖 Test Bot - Versiya ma'lumotlari
 
-📋 Versiya: v0.9.51
+📋 Versiya: v0.9.52
 📅 Yangilangan: 2025-01-27
 👨‍💻 Developer: Test Bot Team
 
 🆕 So'nggi o'zgarishlar:
-• 🔍 Test qidirish jarayoni to'g'ri ishlaydi
-• 🚫 /start komandasi barcha jarayonlarni bekor qiladi
-• 🔙 "Orqaga" tugmasi test qidirishni to'xtatadi
-• ⚡ Context user_data tozalash tizimi qo'shildi
-• 🎯 Barcha jarayonlar to'g'ri boshqariladi
+• 🎯 Test yaratish inline buttonlar bilan
+• 📝 Test turi, toifa, fan tanlash inline buttonlar
+• ⏱️ Vaqt chegarasi va o'tish balli inline buttonlar
+• 🔄 Test yaratish jarayoni soddalashtirildi
+• 🎨 O'qituvchilar uchun qulay interfeys
 
 🔧 Texnik ma'lumotlar:
 • Python 3.10+
