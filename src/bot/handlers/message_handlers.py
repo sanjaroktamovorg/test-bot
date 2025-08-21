@@ -42,6 +42,8 @@ class MessageHandlers:
             await self.bot.command_handlers.help_command(update, context)
         elif text == "⚙️ Sozlamalar":
             await self.settings_command(update, context)
+        elif text == "🔙 Orqaga":
+            await update.message.reply_text("🏠 Asosiy menyuga qaytdingiz.", reply_markup=KeyboardFactory.get_main_keyboard(user_role))
         elif context.user_data.get('creating_test'):
             # Test yaratish logikasi
             await self._handle_test_creation(update, context, text)
@@ -602,13 +604,12 @@ class MessageHandlers:
             # Test qidirish holatini to'xtatish
             context.user_data['searching_test'] = False
             
-            # Mavjud testlar menyusiga qaytish
+            # Mavjud testlar menyusiga qaytish - ReplyKeyboardMarkup bilan
             keyboard = [
-                [InlineKeyboardButton("🌍 Ommaviy testlar", callback_data="public_tests")],
-                [InlineKeyboardButton("🔍 Testni qidirish", callback_data="search_test")],
-                [InlineKeyboardButton("🔙 Orqaga", callback_data="back_to_menu")]
+                [KeyboardButton("🌍 Ommaviy testlar"), KeyboardButton("🔍 Testni qidirish")],
+                [KeyboardButton("🔙 Orqaga")]
             ]
-            reply_markup = InlineKeyboardMarkup(keyboard)
+            reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=False)
             
             await update.message.reply_text(
                 "📝 Mavjud testlar:\n\nQaysi turdagi testlarni ko'rmoqchisiz?",

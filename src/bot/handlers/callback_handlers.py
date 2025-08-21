@@ -244,7 +244,61 @@ Quyidagi tugmalardan birini tanlang:
     async def view_result_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE, result_id: int):
         """Natija ko'rish callback"""
         query = update.callback_query
-        await query.edit_message_text("📊 Natija ko'rish funksiyasi ishlab chiqilmoqda...")
+        
+        # Test natijasini olish
+        try:
+            # Test natijasini database dan olish
+            from src.models import TestResult
+            session = self.bot.test_service.db.get_session()
+            
+            try:
+                result = session.query(TestResult).filter(TestResult.id == result_id).first()
+                
+                if not result:
+                    await query.edit_message_text("❌ Natija topilmadi!")
+                    return
+                
+                # Test ma'lumotlarini olish
+                test = await self.bot.test_service.get_test_by_id(result.test_id)
+                if not test:
+                    await query.edit_message_text("❌ Test ma'lumotlari topilmadi!")
+                    return
+                
+                # Batafsil natija xabarini yaratish
+                date_str = result.completed_at.strftime('%d.%m.%Y %H:%M') if result.completed_at else 'Noma\'lum'
+                status_text = '✅ O\'tdi' if result.percentage >= (test.passing_score or 0) else '❌ O\'tmadi'
+                questions_count = len(result.answers_data.get('answers', [])) if result.answers_data else 'Noma\'lum'
+                
+                result_details = f"""
+📊 Batafsil test natijasi
+
+📋 Test: {test.title}
+📅 Sana: {date_str}
+
+📈 Natijalar:
+• Ball: {result.score}/{result.max_score}
+• Foiz: {result.percentage:.1f}%
+• Holat: {status_text}
+
+🎯 Test ma'lumotlari:
+• O'tish balli: {test.passing_score or 'Aniqlanmagan'}%
+• Savollar soni: {questions_count}
+                """
+                
+                keyboard = [
+                    [InlineKeyboardButton("📝 Boshqa test", callback_data="available_tests")],
+                    [InlineKeyboardButton("📊 Barcha natijalar", callback_data="my_results")],
+                    [InlineKeyboardButton("🏠 Asosiy menyu", callback_data="back_to_menu")]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                
+                await query.edit_message_text(result_details, reply_markup=reply_markup)
+                
+            finally:
+                self.bot.test_service.db.close_session(session)
+                
+        except Exception as e:
+            await query.edit_message_text(f"❌ Natijani olishda xatolik: {str(e)}")
     
     async def view_teacher_test_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE, test_id: int):
         """O'qituvchi test batafsilliklari callback"""
